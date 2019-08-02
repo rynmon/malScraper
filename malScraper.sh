@@ -69,9 +69,4 @@ read -n 1 -s -r -p "Press any key to open HexReport..."
 printf "\n"
 xdg-open /home/$USER/Desktop/malScraper/HexReport.csv
 exit 1
-#testing
-#read -n 1 -s -r -p "Press any key to read report..."
-#cat PayloadReport.txt
 #for domain in $(cat "AMPReport.txt"); do dig +short $domain | tr '\n' ' ' >> Blacklist.csv | geoiplookup $domain | awk 'NR==1{print ", " $5,$6,$7,$8}' >> Blacklist.csv ; done
-#logo=$(figlet "eSentire")
-#echo $logo.

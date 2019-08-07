@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
-RED='\033[0;31m'
-GRN='\033[0;32m'
+RED='\033[0;31m' #red
+GRN='\033[0;32m' #green
 NC='\033[0m' # No Color
 bold=$(tput bold) #variable to format text as bold
 normal=$(tput sgr0) #variable to format text as normal
+#create array to display splash text
 arr[0]=$(echo -e "\U0001F50E Generating list...")
 arr[1]=$(echo -e "\U0001F50E Scraping data...")
 arr[2]=$(echo -e "\U0001F50E Spinning web...")
 timestamp=$(date +%Y-%m-%d-%H:%M)
+#variables for data locations
 PayloadReport=/home/$USER/Desktop/malScraper/PayloadReport.txt
 AMPReport=/home/$USER/Desktop/malScraper/AMPReport.txt
 C2Report=/home/$USER/Desktop/malScraper/C2Report.txt
+#variavle to pull random value from array
 rand=$[$RANDOM % ${#arr[@]}]
 echo $(date)
 echo ${arr[$rand]}
+#feed locations
 PayloadFeed=$(base64 -d <<<"H4sIAHp5QF0AA8soKSkottLXLy3KyUgsLdZLTCotTtVLztBPyS/Py8lPTCnWL0mtKNHnAgCoVL2S
 KQAAAA==" | gunzip)
 C2Feed=$(base64 -d <<<"H4sIAMwQQ10AA0uuTEotSi7KzE3VLSlKTM5OLdLLSy3RT8zJ0SvIKOACAD03/gcfAAAA" | gunzip)
@@ -23,6 +27,7 @@ clear
 mkdir -p /home/$USER/Desktop/malScraper
 echo ${arr[$rand]}
 
+#check for presence of existing reports, if found, delete them
 if test -f "$PayloadReport"; then
 	rm /home/$USER/Desktop/malScraper/PayloadReport.txt
 	#echo "Updating existing payload report..."
@@ -36,17 +41,23 @@ if test -f "$C2Report"; then
 	#echo "Updating existing AMP report..."
 fi
 if test -f "$HexReport"; then
+	rm /home/$USER/Desktop/malScraper/Top100.txt
+	#echo "Updating existing AMP report..."
+fi
+if test -f "$HexReport"; then
 	rm /home/$USER/Desktop/malScraper/HexReport.csv
 	#echo "Updating existing AMP report..."
 fi
 
 #sleep 5
 
-printf "#############################################\n C2 Servers Report sourced from http://cybercrime-tracker.net/ \n#############################################\n" >> /home/$USER/Desktop/malScraper/C2Report.txt
-curl -# $C2Feed >> /home/$USER/Desktop/malScraper/C2Report.txt
-curl -# $HexFeed >> /home/$USER/Desktop/malScraper/HexReport.csv
+printf "#############################################\n# C2 Servers Report sourced from http://cybercrime-tracker.net/ \n#############################################\n" >> /home/$USER/Desktop/malScraper/C2Report.txt
+#pull reports from feeds
+curl -s $C2Feed >> /home/$USER/Desktop/malScraper/C2Report.txt
+curl -s $HexFeed >> /home/$USER/Desktop/malScraper/HexReport.csv
 curl -# $PayloadFeed >> /home/$USER/Desktop/malScraper/PayloadReport.txt
 cd /home/$USER/Desktop/malScraper/
+#strip domains of their http:// and www. headers for ez amp
 cat PayloadReport.txt | egrep -o "http://([^/]*)/" | sed -e 's/^http:\/\///g' | sed 's/www\./ /g' | sed 's/\/$/ /g' | sed 's/ //g' >> AMPReport.txt
 head -100 /home/$USER/Desktop/malScraper/PayloadReport.txt > /home/$USER/Desktop/malScraper/Top100.txt
 #sort temp1.txt | uniq > PayloadReport.txt
@@ -54,6 +65,7 @@ head -100 /home/$USER/Desktop/malScraper/PayloadReport.txt > /home/$USER/Desktop
 #rm temp*
 #printf "\n"
 clear
+#presentation
 printf "${GRN}${bold}Success - Files written to:\n${normal}${NC}"
 printf "${RED}${bold}Payload Domains:${normal}${NC}"
 printf "/home/$USER/Desktop/malScraper/${bold}PayloadDomains.txt${normal}\n"
@@ -67,6 +79,17 @@ printf "${RED}${bold}Most Recent 100:${normal}${NC}"
 printf "/home/$USER/Desktop/malScraper/${bold}Top100.txt${normal}\n\n"
 read -n 1 -s -r -p "Press any key to open HexReport..."
 printf "\n"
+#prompt user & open report
 xdg-open /home/$USER/Desktop/malScraper/HexReport.csv
 exit 1
+
+
+
+#testing
+#read -n 1 -s -r -p "Press any key to read report..."
+#cat PayloadReport.txt
+#was going to pull IP Addressed associated with domains, but made script runtime waaaay tp long
+#due to number of IPs that were being parsed through geoiplookup :(
 #for domain in $(cat "AMPReport.txt"); do dig +short $domain | tr '\n' ' ' >> Blacklist.csv | geoiplookup $domain | awk 'NR==1{print ", " $5,$6,$7,$8}' >> Blacklist.csv ; done
+#logo=$(figlet "eSentire")
+#echo $logo.

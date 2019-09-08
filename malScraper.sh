@@ -83,24 +83,52 @@ head -100 /home/$USER/Desktop/malScraper/PayloadReport.txt > /home/$USER/Desktop
 #printf "\n"
 clear
 #presentation
+#figlet malScraper
 printf "${GRN}${bold}Success - Files written to:\n${normal}${NC}"
-printf "${RED}${bold}Payload Domains:${normal}${NC}"
+printf "${GRN}${bold}1. ${normal}${RED}${bold}Payload Domains:${normal}${NC}"
 printf "/home/$USER/Desktop/malScraper/${bold}PayloadDomains.txt${normal}\n"
-printf "${RED}${bold}AMP Report:${normal}${NC}"
+printf "${GRN}${bold}2. ${normal}${RED}${bold}AMP Report:${normal}${NC}"
 printf "/home/$USER/Desktop/malScraper/${bold}AMPReport.txt${normal}\n"
-printf "${RED}${bold}C2 Servers:${normal}${NC}"
+printf "${GRN}${bold}3. ${normal}${RED}${bold}C2 Servers:${normal}${NC}"
 printf "/home/$USER/Desktop/malScraper/${bold}C2Report.txt${normal}\n"
-printf "${RED}${bold}Hex Report:${normal}${NC}"
+printf "${GRN}${bold}4. ${normal}${RED}${bold}Hex Report:${normal}${NC}"
 printf "/home/$USER/Desktop/malScraper/${bold}HexReport.txt${normal}\n"
-printf "${RED}${bold}PhishTank Phishing Pages:${normal}${NC}/home/$USER/Desktop/malScraper/${bold}HausMalDown.csv${normal}\n"
-printf "${RED}${bold}PhishTank Phishing Pages:${normal}${NC}/home/$USER/Desktop/malScraper/Phishing/${bold}PhishTank.csv${normal}\n"
-printf "${RED}${bold}Most Recent 100:${normal}${NC}"
+printf "${GRN}${bold}5. ${normal}${RED}${bold}URLHaus Maldownloads:${normal}${NC}/home/$USER/Desktop/malScraper/${bold}HausMalDown.csv${normal}\n"
+printf "${GRN}${bold}6. ${normal}${RED}${bold}PhishTank Phishing Pages:${normal}${NC}/home/$USER/Desktop/malScraper/Phishing/${bold}PhishTank.csv${normal}\n"
+printf "${GRN}${bold}7. ${normal}${RED}${bold}Most Recent 100:${normal}${NC}"
 printf "/home/$USER/Desktop/malScraper/${bold}Top100.txt${normal}\n\n"
-read -n 1 -s -r -p "Press any key to open Malware Domains..."
+#read -n 1 -s -r -p "Press any key to open Malware Domains..."
 printf "\n"
 #prompt user & open report
-xdg-open /home/$USER/Desktop/malScraper/HausMalDown.csv
+read -p "Which feed would you like to open?" choice
+printf "\n"
+
+if [[ choice == "1" ]]
+then
+	xdg-open /home/$USER/Desktop/malScraper/PayloadDomains.txt
+elif [[ $choice == "2" ]]
+then
+	xdg-open /home/$USER/Desktop/malScraper/AMPReport.txt
+elif [[ $choice == "3" ]]
+then
+	xdg-open /home/$USER/Desktop/malScraper/C2Report.txt
+elif [[ $choice == "4" ]]
+then
+	xdg-open /home/$USER/Desktop/malScraper/HexReport.txt
+elif [[ $choice == "5" ]]
+then
+	xdg-open /home/$USER/Desktop/malScraper/HausMalDown.csv
+elif [[ $choice == "6" ]]
+then
+	xdg-open /home/$USER/Desktop/malScraper/Phishing/PhishTank.csv
+elif [[ $choice == "7" ]]
+then
+	xdg-open /home/$USER/Desktop/malScraper/Top100.txt
+else
+	printf "${RED}${bold}Error: ${normal}${NC}Invalid Option.\n"
+fi
 exit 1
+
 
 #testing
 #read -n 1 -s -r -p "Press any key to read report..."
@@ -108,5 +136,3 @@ exit 1
 #was going to pull IP Addressed associated with domains, but made script runtime waaaay tp long
 #due to number of IPs that were being parsed through geoiplookup :(
 #for domain in $(cat "AMPReport.txt"); do dig +short $domain | tr '\n' ' ' >> Blacklist.csv | geoiplookup $domain | awk 'NR==1{print ", " $5,$6,$7,$8}' >> Blacklist.csv ; done
-#logo=$(figlet "eSentire")
-#echo $logo.

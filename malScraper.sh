@@ -184,21 +184,40 @@ exit() {
 }
 
 preInstall() {
-	wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz
+	#wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz
 	#check if preRequisates are installed
 	figlet=/usr/bin/figlet
 	if test -f $figlet
 	then
 		#echo "Figlet is installed, continuing..."
 		echo
-	else sudo apt-get install figlet
+	else 
+		echo "Figlet not found on system, preparing to install...\n"
+		sleep 2
+		clear
+		sudo apt-get install figlet
 	fi
 	wmctrl=/usr/bin/wmctrl
 	if test -f $wmctrl
 	then
 		#echo "wmctrl is installed, continuing..."
 		echo
-	else sudo apt-get install wmctrl
+	else 
+		echo "\nwmctrl not found on system, preparing to install...\n"
+		sleep 2
+		clear
+		sudo apt-get install wmctrl
+	fi
+	curlInst=/usr/bin/curl
+	if test -f $curlInst
+	then
+		#echo "curl is installed, continuing..."
+		echo
+	else 
+		echo "\ncurl not found on system, preparing to install...\n"
+		sleep 2
+		clear
+		sudo apt-get install curl
 	fi
 	#echo "Pre-Requisates installed, loading UI!"
 	#sleep 2

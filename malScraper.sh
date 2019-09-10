@@ -7,9 +7,9 @@ GRN='\033[0;32m' #green
 NC='\033[0m' #no colour 
 bold=$(tput bold) #bold
 normal=$(tput sgr0) #normal
-Purple='\033[1;35m' #Purple
-Cyan='\033[1;36m' #Cyan
-Yellow='\033[1;33m'
+Purple='\033[1;35m' #purple
+Cyan='\033[1;36m' #cyan
+Yellow='\033[1;33m' #yellow
 
 #splash-text arrays
 arr[0]=$(echo -e "\U0001F50E Generating list...")
@@ -23,6 +23,10 @@ timestamp=$(date +%Y-%m-%d-%H:%M)
 PayloadReport=/home/$USER/Desktop/malScraper/PayloadReport.txt
 AMPReport=/home/$USER/Desktop/malScraper/AMPReport.txt
 C2Report=/home/$USER/Desktop/malScraper/C2Report.txt
+Top100=/home/$USER/Desktop/malScraper/Top100.txt
+HexReport=/home/$USER/Desktop/malScraper/HexReport.csv
+HausMalDown=/home/$USER/Desktop/malScraper/HausMalDown.csv
+PhishTank=/home/$USER/Desktop/malScraper/Phishing/PhishTank.csv
 
 #pull random token from array
 rand=$[$RANDOM % ${#arr[@]}]
@@ -95,7 +99,7 @@ fullScan() {
 	#figlet malScraper
 	printf "${GRN}${bold}Success - Files written to:\n${normal}${NC}"
 	printf "${GRN}${bold}1. ${normal}${RED}${bold}Payload Domains:${normal}${NC}"
-	printf "/home/$USER/Desktop/malScraper/${bold}PayloadDomains.txt${normal}\n"
+	printf "/home/$USER/Desktop/malScraper/${bold}PayloadReport.txt${normal}\n"
 	printf "${GRN}${bold}2. ${normal}${RED}${bold}AMP Report:${normal}${NC}"
 	printf "/home/$USER/Desktop/malScraper/${bold}AMPReport.txt${normal}\n"
 	printf "${GRN}${bold}3. ${normal}${RED}${bold}C2 Servers:${normal}${NC}"
@@ -112,9 +116,9 @@ fullScan() {
 	read -p "Which feed would you like to open?" option
 	printf "\n"
 
-	if [[ option == "1" ]]
+	if [[ $option == "1" ]]
 	then
-		xdg-open /home/$USER/Desktop/malScraper/PayloadDomains.txt
+		xdg-open /home/$USER/Desktop/malScraper/PayloadReport.txt
 	elif [[ $option == "2" ]]
 	then
 		xdg-open /home/$USER/Desktop/malScraper/AMPReport.txt
@@ -123,7 +127,7 @@ fullScan() {
 		xdg-open /home/$USER/Desktop/malScraper/C2Report.txt
 	elif [[ $option == "4" ]]
 	then
-		xdg-open /home/$USER/Desktop/malScraper/HexReport.txt
+		xdg-open /home/$USER/Desktop/malScraper/HexReport.csv
 	elif [[ $option == "5" ]]
 	then
 		xdg-open /home/$USER/Desktop/malScraper/HausMalDown.csv
@@ -136,7 +140,7 @@ fullScan() {
 	else
 		printf "${RED}${bold}Error: ${normal}${NC}Invalid Option.\n"
 	fi
-	exit 1
+	#exit 1
 }
 
 quickScan() {
@@ -183,8 +187,11 @@ exit() {
 	wmctrl -c :ACTIVE:
 }
 
-preInstall() {
+setupHost() {
 	#wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz
+	#create working dirs
+	mkdir -p /home/$USER/Desktop/malScraper
+	mkdir -p /home/$USER/Desktop/malScraper/Phishing
 	#check if preRequisates are installed
 	figlet=/usr/bin/figlet
 	if test -f $figlet
@@ -192,7 +199,7 @@ preInstall() {
 		#echo "Figlet is installed, continuing..."
 		echo
 	else 
-		echo "Figlet not found on system, preparing to install...\n"
+		printf "Figlet not found on system, preparing to install...\n"
 		sleep 2
 		clear
 		sudo apt-get install figlet
@@ -203,7 +210,7 @@ preInstall() {
 		#echo "wmctrl is installed, continuing..."
 		echo
 	else 
-		echo "\nwmctrl not found on system, preparing to install...\n"
+		printf "\nwmctrl not found on system, preparing to install...\n"
 		sleep 2
 		clear
 		sudo apt-get install wmctrl
@@ -214,7 +221,7 @@ preInstall() {
 		#echo "curl is installed, continuing..."
 		echo
 	else 
-		echo "\ncurl not found on system, preparing to install...\n"
+		printf "\ncurl not found on system, preparing to install...\n"
 		sleep 2
 		clear
 		sudo apt-get install curl
@@ -286,7 +293,7 @@ main() {
 	fi
 }
 
-preInstall
+setupHost
 
 #testing
 #read -n 1 -s -r -p "Press any key to read report..."

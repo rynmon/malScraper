@@ -44,6 +44,22 @@ HausMalDown=$(base64 -d <<<"H4sIAJqXXl0AA8soKSkottLXLy3KyUgsLdZLTCotTtVLztBPyS/P
 AAAA" | gunzip)
 
 #functions
+dirList() {
+	printf "${GRN}${bold}Success - Files written to:\n${normal}${NC}"
+	printf "${GRN}${bold}1. ${normal}${RED}${bold}Payload Domains:${normal}${NC}"
+	printf "/home/$USER/Desktop/malScraper/${bold}PayloadReport.txt${normal}\n"
+	printf "${GRN}${bold}2. ${normal}${RED}${bold}AMP Report:${normal}${NC}"
+	printf "/home/$USER/Desktop/malScraper/${bold}AMPReport.txt${normal}\n"
+	printf "${GRN}${bold}3. ${normal}${RED}${bold}C2 Servers:${normal}${NC}"
+	printf "/home/$USER/Desktop/malScraper/${bold}C2Report.txt${normal}\n"
+	printf "${GRN}${bold}4. ${normal}${RED}${bold}Hex Report:${normal}${NC}"
+	printf "/home/$USER/Desktop/malScraper/${bold}HexReport.txt${normal}\n"
+	printf "${GRN}${bold}5. ${normal}${RED}${bold}URLHaus Maldownloads:${normal}${NC}/home/$USER/Desktop/malScraper/${bold}HausMalDown.csv${normal}\n"
+	printf "${GRN}${bold}6. ${normal}${RED}${bold}PhishTank Phishing Pages:${normal}${NC}/home/$USER/Desktop/malScraper/Phishing/${bold}PhishTank.csv${normal}\n"
+	printf "${GRN}${bold}7. ${normal}${RED}${bold}Most Recent 100:${normal}${NC}"
+	printf "/home/$USER/Desktop/malScraper/${bold}Top100.txt${normal}\n\n"
+}
+
 fullScan() {
 	clear
 	echo $(date)
@@ -97,50 +113,58 @@ fullScan() {
 	clear
 	#presentation
 	#figlet malScraper
-	printf "${GRN}${bold}Success - Files written to:\n${normal}${NC}"
-	printf "${GRN}${bold}1. ${normal}${RED}${bold}Payload Domains:${normal}${NC}"
-	printf "/home/$USER/Desktop/malScraper/${bold}PayloadReport.txt${normal}\n"
-	printf "${GRN}${bold}2. ${normal}${RED}${bold}AMP Report:${normal}${NC}"
-	printf "/home/$USER/Desktop/malScraper/${bold}AMPReport.txt${normal}\n"
-	printf "${GRN}${bold}3. ${normal}${RED}${bold}C2 Servers:${normal}${NC}"
-	printf "/home/$USER/Desktop/malScraper/${bold}C2Report.txt${normal}\n"
-	printf "${GRN}${bold}4. ${normal}${RED}${bold}Hex Report:${normal}${NC}"
-	printf "/home/$USER/Desktop/malScraper/${bold}HexReport.txt${normal}\n"
-	printf "${GRN}${bold}5. ${normal}${RED}${bold}URLHaus Maldownloads:${normal}${NC}/home/$USER/Desktop/malScraper/${bold}HausMalDown.csv${normal}\n"
-	printf "${GRN}${bold}6. ${normal}${RED}${bold}PhishTank Phishing Pages:${normal}${NC}/home/$USER/Desktop/malScraper/Phishing/${bold}PhishTank.csv${normal}\n"
-	printf "${GRN}${bold}7. ${normal}${RED}${bold}Most Recent 100:${normal}${NC}"
-	printf "/home/$USER/Desktop/malScraper/${bold}Top100.txt${normal}\n\n"
+	dirList
 	#read -n 1 -s -r -p "Press any key to open Malware Domains..."
 	#printf "\n"
 	#prompt user & open report
 	read -p "Which feed would you like to open?" option
 	printf "\n"
 
-	if [[ $option == "1" ]]
-	then
-		xdg-open /home/$USER/Desktop/malScraper/PayloadReport.txt
-	elif [[ $option == "2" ]]
-	then
-		xdg-open /home/$USER/Desktop/malScraper/AMPReport.txt
-	elif [[ $option == "3" ]]
-	then
-		xdg-open /home/$USER/Desktop/malScraper/C2Report.txt
-	elif [[ $option == "4" ]]
-	then
-		xdg-open /home/$USER/Desktop/malScraper/HexReport.csv
-	elif [[ $option == "5" ]]
-	then
-		xdg-open /home/$USER/Desktop/malScraper/HausMalDown.csv
-	elif [[ $option == "6" ]]
-	then
-		xdg-open /home/$USER/Desktop/malScraper/Phishing/PhishTank.csv
-	elif [[ $option == "7" ]]
-	then
-		xdg-open /home/$USER/Desktop/malScraper/Top100.txt
-	else
-		printf "${RED}${bold}Error: ${normal}${NC}Invalid Option.\n"
-	fi
-	#exit 1
+	while [[ $option >=1 ]] || [[ $option <=7 ]]; do
+
+		if [[ $option == "1" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/PayloadReport.txt
+			userOptions
+		
+		elif [[ $option == "2" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/AMPReport.txt
+			userOptions
+		
+		elif [[ $option == "3" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/C2Report.txt
+			userOptions
+		
+		elif [[ $option == "4" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/HexReport.csv
+			userOptions
+		
+		elif [[ $option == "5" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/HausMalDown.csv
+			userOptions
+		
+		elif [[ $option == "6" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/Phishing/PhishTank.csv
+			userOptions
+		
+		elif [[ $option == "7" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/Top100.txt
+			userOptions
+		
+		else
+			clear
+			printf "${RED}${bold}Error: ${normal}${NC}Invalid Option.\n"
+			dirList
+			read -p "Which feed would you like to open?" option
+		fi
+	done
+	userOptions
 }
 
 quickScan() {
@@ -148,8 +172,8 @@ quickScan() {
 	echo $(date)
 	echo ${arr[$rand]}
 	if test -f "$PayloadReport"; then
-	rm /home/$USER/Desktop/malScraper/PayloadReport.txt
-	#echo "Updating existing payload report..."
+		rm /home/$USER/Desktop/malScraper/PayloadReport.txt
+		#echo "Updating existing payload report..."
 	fi
 	if test -f "$AMPReport"; then
 		rm /home/$USER/Desktop/malScraper/AMPReport.txt
@@ -179,95 +203,32 @@ quickScan() {
 	curl -# $PayloadFeed >> /home/$USER/Desktop/malScraper/PayloadReport.txt
 	head -100 /home/$USER/Desktop/malScraper/PayloadReport.txt > /home/$USER/Desktop/malScraper/Top100.txt 
 	xdg-open /home/$USER/Desktop/malScraper/Top100.txt
-
+	sleep 1
+	printf "\n"
+	userOptions
 }
 
 exit() {
 	#close terminal
-	wmctrl -c :ACTIVE:
-}
-
-setupHost() {
-	#wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz
-	#create working dirs
-	mkdir -p /home/$USER/Desktop/malScraper
-	mkdir -p /home/$USER/Desktop/malScraper/Phishing
-	#check if preRequisates are installed
-	figlet=/usr/bin/figlet
-	if test -f $figlet
+	read -p "Are you sure? (Y/N)" closeConf
+	closeConf=${closeConf^^} #force user input to uppercase
+	if [[ $closeConf == "Y" ]] || [[ $closeConf == "YES" ]]
 	then
-		#echo "Figlet is installed, continuing..."
-		echo
-	else 
-		printf "Figlet not found on system, preparing to install...\n"
-		sleep 2
-		clear
-		sudo apt-get install figlet
+		echo -e "Bye... \U0001F44B\U0001F622"
+		sleep .5
+		wmctrl -c :ACTIVE:
+	elif [[ $closeConf == "N" ]] || [[ $closeConf == "NO" ]]
+		then
+			printf "\n"
+			userOptions
+	else
+		printf "${RED}${bold}Error - ${normal}${NC}invalid operation\n"
+		helpText
+		userOptions
 	fi
-	wmctrl=/usr/bin/wmctrl
-	if test -f $wmctrl
-	then
-		#echo "wmctrl is installed, continuing..."
-		echo
-	else 
-		printf "\nwmctrl not found on system, preparing to install...\n"
-		sleep 2
-		clear
-		sudo apt-get install wmctrl
-	fi
-	curlInst=/usr/bin/curl
-	if test -f $curlInst
-	then
-		#echo "curl is installed, continuing..."
-		echo
-	else 
-		printf "\ncurl not found on system, preparing to install...\n"
-		sleep 2
-		clear
-		sudo apt-get install curl
-	fi
-	#echo "Pre-Requisates installed, loading UI!"
-	#sleep 2
-	#clear
-	main
 }
 
-clearScreen() {
-	printf "Clearing screen..."
-	sleep 3
-	clear
-	main
-}
-
-help() {
-	printf "This feature is currently unavailable, check back later.\n\nReturning to Home menu..."
-	sleep 3
-	main
-}
-
-main() {
-	clear
-	#force maximum window
-	wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz
-	figlet malScraper
-
-	printf "\t${Purple}Tool\t :: malScraper\n"
-	printf "\tAuthor\t :: Ryan Monaghan\n"
-	printf "\tTwitter\t :: @rynmonaghan\n"
-	printf "\tGithub\t :: https://github.com/Ryan-Monaghan/malScraper\n"
-	printf "\tVersion\t :: 1.0\n\n${NC}"
-
-	printf "${Cyan}HELP MENU${NC} ${bold}::${normal} Available ${Yellow}options${NC} shown below:\n\n"
-	
-	printf "${bold}[*]${normal} ${Cyan}Tutorial${NC} of how to use this tool\t\t\t\t${Yellow}TUTORIAL${NC}\n"
-	printf "${bold}[*]${normal} Show this ${Cyan}Help${NC} Menu\t\t\t\t\t\t${Yellow}HELP,GET-HELP,?,-?,/?,MENU${NC}\n"
-	printf "${bold}[*]${normal} ${Cyan}Show options${NC} for this tool\t\t\t\t\t${Yellow}SHOW OPTIONS,SHOW,OPTIONS${NC}\n"
-	printf "${bold}[*]${normal} ${Cyan}Clear${NC} screen\t\t\t\t\t\t${Yellow}CLEAR,CLEAR-HOST,CLS${NC}\n"
-	printf "${bold}[*]${normal} Go ${Cyan}Back${NC} to previous menu\t\t\t\t\t${Yellow}BACK,CD ..${NC}\n"
-	printf "${bold}[*]${normal} ${Cyan}Quit${NC} malScraper\t\t\t\t\t\t${Yellow}QUIT,EXIT${NC}\n"
-	printf "${bold}[*]${normal} Perform ${Cyan}Full-Scan${NC} (Note this may take some time)\t\t${Yellow}FULL,FULL-SCAN,FSCAN${NC}\n"
-	printf "${bold}[*]${normal} Perform ${Cyan}Quick-Scan${NC} Most recent 100 Payload Domains\t\t${Yellow}QUICK,QUICK-SCAN,QSCAN${NC}\n\n"
-
+userOptions() {
 	read -p "malScraper>" option #store user input
 
 	option=${option^^} #force user input to uppercase
@@ -288,9 +249,111 @@ main() {
 	elif [[ $option == "HELP" ]] || [[ $option == "GET-HELP" ]] || [[ $option == "?" ]] || [[ $option == "-?" ]] || [[ $option == "/?" ]] || [[ $option == "MENU" ]]
 		then
 			help
+	elif [[ $option == "BACK" ]] || [[ $option == "CD .." ]] || [[ $option == "HOME" ]]
+		then
+			main
+	elif [[ $option == "TUTORIAL" ]]
+		then
+			tutorial
 	else
 		printf "${RED}${bold}Error - ${normal}${NC}invalid operation\n"
+		helpText
+		userOptions
 	fi
+}
+
+setupHost() {
+	#wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz
+	#create working dirs
+	mkdir -p /home/$USER/Desktop/malScraper
+	mkdir -p /home/$USER/Desktop/malScraper/Phishing
+	#check if preRequisates are installed
+	figlet=/usr/bin/figlet
+	if test -f $figlet
+	then
+		#echo "Figlet is installed, continuing..."
+		echo
+	else 
+		printf "Figlet not found on system, preparing to install...\n"
+		sleep 2
+		clear
+		sudo apt-get install figlet
+		clear
+	fi
+	wmctrl=/usr/bin/wmctrl
+	if test -f $wmctrl
+	then
+		#echo "wmctrl is installed, continuing..."
+		echo
+	else 
+		printf "\nwmctrl not found on system, preparing to install...\n"
+		sleep 2
+		clear
+		sudo apt-get install wmctrl
+		clear
+	fi
+	curlInst=/usr/bin/curl
+	if test -f $curlInst
+	then
+		#echo "curl is installed, continuing..."
+		echo
+	else 
+		printf "\ncurl not found on system, preparing to install...\n"
+		sleep 2
+		clear
+		sudo apt-get install curl
+		clear
+	fi
+	#echo "Pre-Requisates installed, loading UI!"
+	#sleep 2
+	#clear
+	main
+}
+
+clearScreen() {
+	clear
+	userOptions
+}
+
+helpText() {
+	printf "${Cyan}HELP MENU${NC} ${bold}::${normal} Available ${Yellow}options${NC} shown below:\n\n"
+	printf "${bold}[*]${normal} ${Cyan}Tutorial${NC} of how to use this tool\t\t\t\t\t${Yellow}TUTORIAL${NC}\n"
+	printf "${bold}[*]${normal} Show this ${Cyan}Help${NC} Menu\t\t\t\t\t\t\t${Yellow}HELP,GET-HELP,?,-?,/?,MENU${NC}\n"
+	printf "${bold}[*]${normal} ${Cyan}Show options${NC} for this tool\t\t\t\t\t\t${Yellow}SHOW OPTIONS,SHOW,OPTIONS${NC}\n"
+	printf "${bold}[*]${normal} ${Cyan}Clear${NC} screen\t\t\t\t\t\t\t${Yellow}CLEAR,CLEAR-HOST,CLS${NC}\n"
+	printf "${bold}[*]${normal} Return to ${Cyan}Home${NC} Menu\t\t\t\t\t\t\t${Yellow}HOME,BACK,CD ..${NC}\n"
+	printf "${bold}[*]${normal} ${Cyan}Quit${NC} malScraper\t\t\t\t\t\t\t${Yellow}QUIT,EXIT${NC}\n"
+	printf "${bold}[*]${normal} Perform ${Cyan}Full-Scan${NC} (Note this may take some time)\t\t\t${Yellow}FULL,FULL-SCAN,FSCAN${NC}\n"
+	printf "${bold}[*]${normal} Perform ${Cyan}Quick-Scan${NC} Most recent 100 Payload Domains\t\t\t${Yellow}QUICK,QUICK-SCAN,QSCAN${NC}\n\n"
+}
+
+help() {
+	helpText
+	userOptions
+}
+
+tutorial() {
+	echo -e "Go away you egg, this menu is unfinished. \U0001F620"
+	sleep .5
+	printf "\n"
+	userOptions
+}
+
+main() {
+	clear
+	#force maximum window
+	wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz
+	figlet malScraper
+
+	printf "\t${Purple}Tool\t :: malScraper\n"
+	printf "\tAuthor\t :: Ryan Monaghan\n"
+	printf "\tTwitter\t :: @rynmonaghan\n"
+	printf "\tGithub\t :: https://github.com/Ryan-Monaghan/malScraper\n"
+	printf "\tBranch\t :: Stable\n"
+	printf "\tVersion\t :: 1.0\n\n${NC}"
+	
+	helpText
+	userOptions
 }
 
 setupHost

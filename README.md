@@ -6,6 +6,3 @@ malScraper v1.0
 Introduction
 ------------
 malScraper scrapes a list of Payload Domains, IOC's &amp; C2 IPs from from various feeds, for easy blacklisting.
-
-
-Testing Theme

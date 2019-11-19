@@ -10,4 +10,5 @@ malScraper scrapes a list of Payload Domains, IOC's &amp; C2 IPs from from vario
 Version History
 ------------
 1.0 - Initial Implementation, core functionality.
+
 1.1 - Added Reopen Function - Ability to Reopen a previously composed report.

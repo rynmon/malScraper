@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #global vars
-
+#QlQu8eC4
 #formatting
 RED='\033[0;31m' #red
 GRN='\033[0;32m' #green
@@ -159,8 +159,8 @@ fullScan() {
 		
 		else
 			clear
-			printf "${RED}${bold}Error: ${normal}${NC}Invalid Option.\n"
 			dirList
+			printf "${RED}${bold}Error: ${normal}${NC}Invalid Option.\n"
 			read -p "Which feed would you like to open?" option
 		fi
 	done
@@ -210,11 +210,15 @@ quickScan() {
 
 exit() {
 	#close terminal
+	arr[0]=$(echo -e "Bye... \U0001F44B\U0001F622")
+	arr[1]=$(echo -e "Cya... \U0001F44B\U0001F622")
+	arr[2]=$(echo -e "Byeeeeeeeeeeee... \U0001F44B\U0001F622")
+	rand=$[$RANDOM % ${#arr[@]}]
 	read -p "Are you sure? (Y/N)" closeConf
 	closeConf=${closeConf^^} #force user input to uppercase
 	if [[ $closeConf == "Y" ]] || [[ $closeConf == "YES" ]]
 	then
-		echo -e "Bye... \U0001F44B\U0001F622"
+		echo ${arr[$rand]}
 		sleep .5
 		wmctrl -c :ACTIVE:
 	elif [[ $closeConf == "N" ]] || [[ $closeConf == "NO" ]]
@@ -255,6 +259,9 @@ userOptions() {
 	elif [[ $option == "TUTORIAL" ]]
 		then
 			tutorial
+	elif [[ $option == "REOPEN" ]] || [[ $option == "OPEN" ]]
+		then
+			reOpen
 	else
 		printf "${RED}${bold}Error - ${normal}${NC}invalid operation\n"
 		helpText
@@ -322,6 +329,7 @@ helpText() {
 	printf "${bold}[*]${normal} ${Cyan}Show options${NC} for this tool\t\t\t\t\t\t${Yellow}SHOW OPTIONS,SHOW,OPTIONS${NC}\n"
 	printf "${bold}[*]${normal} ${Cyan}Clear${NC} screen\t\t\t\t\t\t\t${Yellow}CLEAR,CLEAR-HOST,CLS${NC}\n"
 	printf "${bold}[*]${normal} Return to ${Cyan}Home${NC} Menu\t\t\t\t\t\t\t${Yellow}HOME,BACK,CD ..${NC}\n"
+	printf "${bold}[*]${normal} ${Cyan}Open${NC} an existing report\t\t\t\t\t\t${Yellow}OPEN,REOPEN${NC}\n"
 	printf "${bold}[*]${normal} ${Cyan}Quit${NC} malScraper\t\t\t\t\t\t\t${Yellow}QUIT,EXIT${NC}\n"
 	printf "${bold}[*]${normal} Perform ${Cyan}Full-Scan${NC} (Note this may take some time)\t\t\t${Yellow}FULL,FULL-SCAN,FSCAN${NC}\n"
 	printf "${bold}[*]${normal} Perform ${Cyan}Quick-Scan${NC} Most recent 100 Payload Domains\t\t\t${Yellow}QUICK,QUICK-SCAN,QSCAN${NC}\n\n"
@@ -333,9 +341,68 @@ help() {
 }
 
 tutorial() {
-	echo -e "Go away you egg, this menu is unfinished. \U0001F620"
+	echo -e "Go away you egg, this menu is unfinished. \U0001F620cd "
 	sleep .5
 	printf "\n"
+	userOptions
+}
+
+reOpen() {
+	clear
+	dirList
+	#read -n 1 -s -r -p "Press any key to open Malware Domains..."
+	#printf "\n"
+	#prompt user & open report
+	read -p "Which feed would you like to open?" option
+	printf "\n"
+
+	while [[ $option >=1 ]] || [[ $option <=7 ]]; do
+
+		if [[ $option == "1" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/PayloadReport.txt
+			userOptions
+		
+		elif [[ $option == "2" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/AMPReport.txt
+			userOptions
+		
+		elif [[ $option == "3" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/C2Report.txt
+			userOptions
+		
+		elif [[ $option == "4" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/HexReport.csv
+			userOptions
+		
+		elif [[ $option == "5" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/HausMalDown.csv
+			userOptions
+		
+		elif [[ $option == "6" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/Phishing/PhishTank.csv
+			userOptions
+		
+		elif [[ $option == "7" ]]
+		then
+			xdg-open /home/$USER/Desktop/malScraper/Top100.txt
+			userOptions
+		elif [[ $option == "home" ]]
+			then
+				main
+				
+		else
+			clear
+			dirList
+			printf "${RED}${bold}Error: ${normal}${NC}Invalid Option.\n"
+			read -p "Which feed would you like to open?" option
+		fi
+	done
 	userOptions
 }
 
@@ -350,7 +417,7 @@ main() {
 	printf "\tTwitter\t :: @rynmonaghan\n"
 	printf "\tGithub\t :: https://github.com/Ryan-Monaghan/malScraper\n"
 	printf "\tBranch\t :: Stable\n"
-	printf "\tVersion\t :: 1.0\n\n${NC}"
+	printf "\tVersion\t :: 1.1\n\n${NC}"
 	
 	helpText
 	userOptions

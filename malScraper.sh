@@ -9,7 +9,7 @@ normal=$(tput sgr0) #normal
 Purple='\033[1;35m' #purple
 Cyan='\033[1;36m' #cyan
 Yellow='\033[1;33m' #yellow
-
+currentVersion=0.1
 #splash-text arrays
 #add your own by adding to the below arrays
 arr[0]=$(echo -e "\U0001F50E Generating list...")
@@ -49,6 +49,9 @@ AAAA" | gunzip)
 #This section is fully modular, feel free to add additional feeds. To encode the feed links, open a terminal
 #and echo the feed URL through the following command: echo <FEEDURL> | gzip | base64
 
+
+release=$(base64 -d <<<"H4sIAJjfGF4AAw3JMQ6AIAwF0N27SHfv4CIn+JKGkgBtaB28vb71SYT5QQRrqbaQ505FBy02dbpe
+zP3UiSqYNNBzWTBef3eGs1NHsMf2AXgtyE1GAAAA" | gunzip)
 
 #functions
 
@@ -241,13 +244,14 @@ exit() {
 	else
 		clear
 		printf "${RED}${bold}Error - ${normal}${NC}invalid operation\n"
+		clear
 		helpText
 		userOptions
 	fi
 }
 
 ########################################################
-#function responsible for storing#
+#function responsible for storing                      #
 ########################################################
 
 userOptions() {
@@ -280,8 +284,12 @@ userOptions() {
 	elif [[ $option == "REOPEN" ]] || [[ $option == "OPEN" ]]
 		then
 			reOpen
+	elif [[ $option == "INSTALL" ]] || [[ $option == "UPDATE" ]]
+		then
+			printf "Feature incomplete\n"
 	else
-		printf "${RED}${bold}Error - ${normal}${NC}invalid operation\n"
+		clear
+		printf "${RED}${bold}Error - ${normal}${NC}invalid operation\n\n"
 		helpText
 		userOptions
 	fi
@@ -364,8 +372,9 @@ helpText() {
 	printf "${bold}[*]${normal} Return to ${Cyan}Home${NC} Menu\t\t\t\t\t\t\t${Yellow}HOME,BACK,CD ..${NC}\n"
 	printf "${bold}[*]${normal} ${Cyan}Open${NC} an existing report\t\t\t\t\t\t${Yellow}OPEN,REOPEN${NC}\n"
 	printf "${bold}[*]${normal} ${Cyan}Quit${NC} malScraper\t\t\t\t\t\t\t${Yellow}QUIT,EXIT${NC}\n"
+	printf "${bold}[*]${normal} ${Cyan}Install${NC} the latest ${Cyan}update${NC}\t\t\t\t\t\t${Yellow}INSTALL,UPDATE${NC}\n"
 	printf "${bold}[*]${normal} Perform ${Cyan}Full-Scan${NC} (Note this may take some time)\t\t\t${Yellow}FULL,FULL-SCAN,FSCAN${NC}\n"
-	printf "${bold}[*]${normal} Perform ${Cyan}Quick-Scan${NC} Most recent 100 Payload Domains\t\t\t${Yellow}QUICK,QUICK-SCAN,QSCAN${NC}\n\n"
+	printf "${bold}[*]${normal} Perform ${Cyan}Quick-Scan${NC} (Most recent 100 Payload Domains)\t\t${Yellow}QUICK,QUICK-SCAN,QSCAN${NC}\n\n"
 }
 
 ###########################################################
@@ -383,7 +392,7 @@ help() {
 
 tutorial() {
 	#echo -e "Go away you egg, this menu is unfinished. \U0001F620"
-	tutText="\n${bold}MalScraper\n\n${bold}NAME\n - ${normal}./malScraper.sh - malScraper scrapes a list of Payload Domains, IOC's & C2 IPs from from various feeds, for easy blacklisting.\n\n${bold}SYNOPSIS\n./extract ${normal}\e[4m[FILE]\e[0m\n${bold}e.g. - ${normal}./extract <infile> <outfile>\n\n${bold}DESCRIPTION\n - ${normal}To extract domains, invoke the script, and add the name of the file you would like to extract domains from, followed by the name of the output file.\n ${bold}- ${normal}Please enclose files with spaces between '', for example 'Hello World'\n"
+	tutText="\n${bold}MalScraper\n\n${bold}NAME\n - ${normal}./malScraper.sh - malScraper scrapes a list of Payload Domains, IOC's & C2 IPs from from various feeds, for easy blacklisting.\n\n${bold}SYNOPSIS\n./extract ${normal}\e[4m[FILE]\e[0m\n${bold}e.g. - ${normal}./malScraper \n\n${bold}DESCRIPTION\n - ${normal}This menu us incomplete :('\n"
 	clear
 	printf "$tutText"
 	#sleep .5
@@ -448,10 +457,47 @@ reOpen() {
 			clear
 			dirList
 			printf "${RED}${bold}Error: ${normal}${NC}Invalid Option.\n"
-			read -p "Which feed would you like to open?" option
+			read -p "Which feed would you like to open? " option
 		fi
 	done
 	userOptions
+}
+
+###############################################
+#function responsible for checking for updates#
+#queries GitHub CodeLoad API to verify version#
+###############################################
+
+versionCheck() {
+	wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz
+	versionNum=$(curl -s $release | grep -oP '"tag_name": "\K(.*)(?=")')
+	latestZIPBall=$(curl -s $release | grep -oP '"zipball_url": "\K(.*)(?=")')
+	#echo $versionNum
+	#echo $currentVersion
+	if [[ $currentVersion == $versionNum ]]
+	then
+		printf ""
+	else
+		read -p "New version available, update? " option
+		option=${option^^} #force user input to uppercase
+		if [[ $option == YES ]] || [[ $option == Y ]]
+			then
+				#cd /home/$USER/Desktop/malScraper/Updates
+				wget -P /home/$USER/Desktop/malScraper/Updates $latestZIPBall
+				sleep 1
+				clear
+				printf "${GRN}${bold}Success:${normal}${NC} Update complete, restarting..."
+				sleep 2
+				clear
+		elif [[ $option == NO ]] || [[ $option == N ]]
+			then
+				printf "Continuing..."
+				sleep .5
+		else 
+			printf "${RED}${bold}Error: ${normal}${NC}Invalid Option.\n"
+			read -p "New version available, update? " option
+		fi
+	fi
 }
 
 ###########################################################
@@ -459,6 +505,7 @@ reOpen() {
 ###########################################################
 
 main() {
+	versionCheck
 	clear
 	#force maximum window
 	wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz

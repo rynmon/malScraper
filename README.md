@@ -14,4 +14,4 @@ Version History
 1.1 - Added Reopen Function - Ability to Reopen a previously composed report.
 
 
-1.2 - Added Version Checking - malScraper will not verify if you are using the laters version on startup.
+1.2 - Added Version Checking - malScraper will now verify if you are using the laters version on startup.

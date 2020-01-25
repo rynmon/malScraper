@@ -9,7 +9,7 @@ normal=$(tput sgr0) #normal
 Purple='\033[1;35m' #purple
 Cyan='\033[1;36m' #cyan
 Yellow='\033[1;33m' #yellow
-currentVersion=0.1
+currentVersion=
 #splash-text arrays
 #add your own by adding to the below arrays
 arr[0]=$(echo -e "\U0001F50E Generating list...")
@@ -32,7 +32,7 @@ HexReport=/home/$USER/Desktop/malScraper/HexReport.csv
 HausMalDown=/home/$USER/Desktop/malScraper/HausMalDown.csv
 PhishTank=/home/$USER/Desktop/malScraper/Phishing/PhishTank.csv
 
-#pull random token from array
+#pull random string from array
 rand=$[$RANDOM % ${#arr[@]}]
 
 #feed locations
@@ -49,7 +49,7 @@ AAAA" | gunzip)
 #This section is fully modular, feel free to add additional feeds. To encode the feed links, open a terminal
 #and echo the feed URL through the following command: echo <FEEDURL> | gzip | base64
 
-
+#GitHub CodeLoad API
 release=$(base64 -d <<<"H4sIAJjfGF4AAw3JMQ6AIAwF0N27SHfv4CIn+JKGkgBtaB28vb71SYT5QQRrqbaQ505FBy02dbpe
 zP3UiSqYNNBzWTBef3eGs1NHsMf2AXgtyE1GAAAA" | gunzip)
 
@@ -250,9 +250,14 @@ exit() {
 	fi
 }
 
-########################################################
-#function responsible for storing                      #
-########################################################
+
+installUpdate() {
+	unzip /home/$USER/Desktop/malScraper/Updates/1.2 -d /home/$USER/Desktop/malScraper/Updates/
+}
+
+###############################################################
+#function responsible for loading unctions based on user input#
+###############################################################
 
 userOptions() {
 	read -p "malScraper>" option #store user input
@@ -286,7 +291,7 @@ userOptions() {
 			reOpen
 	elif [[ $option == "INSTALL" ]] || [[ $option == "UPDATE" ]]
 		then
-			printf "Feature incomplete\n"
+			installUpdate
 	else
 		clear
 		printf "${RED}${bold}Error - ${normal}${NC}invalid operation\n\n"
@@ -476,7 +481,8 @@ versionCheck() {
 	#echo $currentVersion
 	if [[ $currentVersion == $versionNum ]]
 	then
-		printf ""
+		printf "${GRN}${bold}Running latest version: 1.2${normal}${NC}"
+		sleep 1
 	else
 		read -p "New version available, update? " option
 		option=${option^^} #force user input to uppercase
@@ -486,13 +492,13 @@ versionCheck() {
 				wget -P /home/$USER/Desktop/malScraper/Updates $latestZIPBall
 				sleep 1
 				clear
-				printf "${GRN}${bold}Success:${normal}${NC} Update complete, restarting..."
+				printf "${GRN}${bold}Success:${normal}${NC} Update downloaded - Install the update via the menu..."
 				sleep 2
 				clear
 		elif [[ $option == NO ]] || [[ $option == N ]]
 			then
 				printf "Continuing..."
-				sleep .5
+				sleep 1
 		else 
 			printf "${RED}${bold}Error: ${normal}${NC}Invalid Option.\n"
 			read -p "New version available, update? " option
@@ -516,7 +522,7 @@ main() {
 	printf "\tTwitter\t :: @rynmonaghan\n"
 	printf "\tGithub\t :: https://github.com/Ryan-Monaghan/malScraper\n"
 	printf "\tBranch\t :: Stable\n"
-	printf "\tVersion\t :: 1.1\n\n${NC}"
+	printf "\tVersion\t :: 1.2\n\n${NC}"
 	
 	helpText
 	userOptions

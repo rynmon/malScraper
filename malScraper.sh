@@ -9,7 +9,7 @@ normal=$(tput sgr0) #normal
 Purple='\033[1;35m' #purple
 Cyan='\033[1;36m' #cyan
 Yellow='\033[1;33m' #yellow
-currentVersion=
+currentVersion=1.2
 #splash-text arrays
 #add your own by adding to the below arrays
 arr[0]=$(echo -e "\U0001F50E Generating list...")

@@ -1,7 +1,7 @@
 [malScraper v1.2](https://ryan-monaghan.github.io/malScraper/)
 ===============
 
-![malScraper Screenshot](https://github.com/Ryan-Monaghan/ryanmonaghan.github.io/blob/master/Screenshot%20from%202020-01-23%2014-21-06.png)
+![malScraper Screenshot](https://raw.githubusercontent.com/Ryan-Monaghan/ryanmonaghan.github.io/master/Screenshot%20from%202020-01-23%2014-21-06.png)
 
 Introduction
 ------------

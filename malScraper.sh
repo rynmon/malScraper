@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
+
 #global vars
+
 #formatting
 RED='\033[0;31m' #red
 GRN='\033[0;32m' #green
@@ -10,9 +12,6 @@ Purple='\033[1;35m' #purple
 Cyan='\033[1;36m' #cyan
 Yellow='\033[1;33m' #yellow
 currentVersion=1.2
-
-
-#GitHub macOS commit test :)
 
 #splash-text arrays
 #add your own by adding to the below arrays
@@ -187,6 +186,7 @@ fullScan() {
 	userOptions
 }
 
+#this function is responsible for performing a quick scan - only downloading the most recent 100 payload domains
 quickScan() {
 	clear
 	echo $(date)
@@ -228,6 +228,7 @@ quickScan() {
 	userOptions
 }
 
+#this function is responsible for handling program exits
 exit() {
 	#close terminal
 	arr[0]=$(echo -e "Bye... \U0001F44B\U0001F622")
@@ -254,13 +255,13 @@ exit() {
 	fi
 }
 
-
+#this function is responsivle for installing updates
 installUpdate() {
 	unzip /home/$USER/Desktop/malScraper/Updates/1.2 -d /home/$USER/Desktop/malScraper/Updates/
 }
 
 ###############################################################
-#function responsible for loading unctions based on user input#
+#function responsible for loading functions based on user input#
 ###############################################################
 
 userOptions() {

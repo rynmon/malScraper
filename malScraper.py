@@ -1,11 +1,13 @@
+#imports
 import os
 import time
 import sys
+import random
 import ctypes
 from pyfiglet import Figlet
 from colorama import Fore, Style
 
-#formatting
+#constants
 RED=Fore.RED
 GRN=Fore.GREEN
 NC=Style.RESET_ALL
@@ -15,19 +17,18 @@ PURPLE=Fore.MAGENTA
 CYAN=Fore.CYAN
 YELLOW=Fore.YELLOW
 
+#variables
+emojis=["😊", "😂", "😍", "👍", "🎉", "🚀", "💻", "🌈"]
+randomEmoji=random.choice(emojis)
+
+#functions
 def displayCountdown(seconds):
     for i in range(seconds, 0, -1):
         print(f"Returning to Main Menu in: {i}{' ' if i > 9 else '  '}", end='\r')
         time.sleep(1)
 
-
-def clearScreen():
-    # Clear the screen
-    os.system('cls' if os.name == 'nt' else 'clear')
-
 def clearMenu():
     os.system('cls' if os.name == 'nt' else 'clear')
-    helpText()
 
 def fullScan():
     print("DEBUG")
@@ -40,8 +41,8 @@ def exitApp():
     sys.exit()
 
 def helpFunc():
+    clearMenu()
     helpText()
-    userOptions()
 
 def tutorial():
     print("Tutorial is still on the to-do list.")
@@ -66,6 +67,7 @@ def helpText():
     print(f"[*] {CYAN}Install{NC} the latest {CYAN}update{NC}\t\t\t\t\t\t{YELLOW}INSTALL,UPDATE{NC}")
     print(f"[*] Perform {CYAN}Full-Scan{NC} (Note this may take some time)\t\t\t{YELLOW}FULL,FULL-SCAN,FSCAN{NC}")
     print(f"[*] Perform {CYAN}Quick-Scan{NC} (Most recent 100 Payload Domains)\t\t{YELLOW}QUICK,QUICK-SCAN,QSCAN{NC}")
+    userOptions()
 
 def userOptions():
     option=input("\nmalscraper> ").upper()
@@ -89,13 +91,13 @@ def userOptions():
     elif option in ["INSTALL", "UPDATE"]:
         installUpdate()
     else:
-        clearScreen() 
+        clearMenu() 
         print(f"{RED}{BOLD}Error: {NORMAL}{NC}Invalid Option.")
         helpText()
         userOptions()
 
 def main():
-    clearScreen()
+    clearMenu()
     f = Figlet(font='slant')
     print(f.renderText('malScraper.py'))
     print(f"\t{PURPLE}Tool\t :: malScraper{NC}")
@@ -108,17 +110,3 @@ def main():
     userOptions()
 
 main()
-    
-"""helpText() {
-	printf "${Cyan}HELP MENU${NC} ${bold}::${normal} Available ${Yellow}options${NC} shown below:\n\n"
-	printf "${bold}[*]${normal} ${Cyan}Tutorial${NC} of how to use this tool\t\t\t\t\t${Yellow}TUTORIAL${NC}\n"
-	printf "${bold}[*]${normal} Show this ${Cyan}Help${NC} Menu\t\t\t\t\t\t\t${Yellow}HELP,GET-HELP,?,-?,/?,MENU${NC}\n"
-	printf "${bold}[*]${normal} ${Cyan}Show options${NC} for this tool\t\t\t\t\t\t${Yellow}SHOW OPTIONS,SHOW,OPTIONS${NC}\n"
-	printf "${bold}[*]${normal} ${Cyan}Clear${NC} screen\t\t\t\t\t\t\t${Yellow}CLEAR,CLEAR-HOST,CLS${NC}\n"
-	printf "${bold}[*]${normal} Return to ${Cyan}Home${NC} Menu\t\t\t\t\t\t\t${Yellow}HOME,BACK,CD ..${NC}\n"
-	printf "${bold}[*]${normal} ${Cyan}Open${NC} an existing report\t\t\t\t\t\t${Yellow}OPEN,REOPEN${NC}\n"
-	printf "${bold}[*]${normal} ${Cyan}Quit${NC} malScraper\t\t\t\t\t\t\t${Yellow}QUIT,EXIT${NC}\n"
-	printf "${bold}[*]${normal} ${Cyan}Install${NC} the latest ${Cyan}update${NC}\t\t\t\t\t\t${Yellow}INSTALL,UPDATE${NC}\n"
-	printf "${bold}[*]${normal} Perform ${Cyan}Full-Scan${NC} (Note this may take some time)\t\t\t${Yellow}FULL,FULL-SCAN,FSCAN${NC}\n"
-	printf "${bold}[*]${normal} Perform ${Cyan}Quick-Scan${NC} (Most recent 100 Payload Domains)\t\t${Yellow}QUICK,QUICK-SCAN,QSCAN${NC}\n\n"
-}"""

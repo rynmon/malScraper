@@ -70,4 +70,4 @@ Contributions are welcome! If you find a bug or have an enhancement in mind, fee
 malScraper will automatically check for updates on startup. Make sure you are using the latest version to benefit from new features and improvements.
 
 ## License
-This project is licensed under the [MIT License](url).
+This project is licensed under the [MIT License]([url](https://github.com/Ryan-Monaghan/malScraper/blob/master/LICENSE)).

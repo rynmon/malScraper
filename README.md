@@ -1,5 +1,7 @@
 [malScraper v1.3](https://ryan-monaghan.github.io/malScraper/)
 ===============
+![malScraper Screenshot](https://raw.githubusercontent.com/Ryan-Monaghan/ryanmonaghan.github.io/master/Screenshot%20from%202020-01-23%2014-21-06.png)
+![2023-12-27_00-37-09](https://github.com/Ryan-Monaghan/malScraper/assets/8824673/5a2fa461-6b67-4070-8df0-cd8c41901fe6)
 ## Table of Contents
 - [Introduction](#introduction)
 - [Features](#features)
@@ -17,9 +19,6 @@
 - **Modular Design**: Easily extendable with additional modules.
 - **Version Checking**: Verify if you are using the latest version on startup.
 - **Reopen Functionality**: Ability to reopen a previously composed report.
-
-![malScraper Screenshot](https://raw.githubusercontent.com/Ryan-Monaghan/ryanmonaghan.github.io/master/Screenshot%20from%202020-01-23%2014-21-06.png)
-![2023-12-27_00-37-09](https://github.com/Ryan-Monaghan/malScraper/assets/8824673/5a2fa461-6b67-4070-8df0-cd8c41901fe6)
 
 ## Version History
 - **1.3** - Initial Python Conversion

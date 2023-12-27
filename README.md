@@ -11,7 +11,7 @@
 - [License](#license)
 
 ## Introduction
-malScraper is a modular tool that streamlines the process of scraping and managing lists of Payload Domains, IOC's & C2 IPs from various feeds. It simplifies the task of blacklisting for security and threat intelligence purposes.
+- malScraper is a modular tool that streamlines the process of scraping and managing lists of Payload Domains, IOC's & C2 IPs from various feeds. It simplifies the task of blacklisting for security and threat intelligence purposes.
 
 ## Features
 - **Modular Design**: Easily extendable with additional modules.
@@ -46,7 +46,7 @@ malScraper is a modular tool that streamlines the process of scraping and managi
    pip install -r requirements.txt
 
 ## Usage
-To use malScraper, follow these steps:
+- To use malScraper, follow these steps:
 
 1. Run the tool.
    ```python
@@ -54,10 +54,10 @@ To use malScraper, follow these steps:
 2. Follow the on-screen instructions to configure and use the tool.
 
 ## Contributing
-Contributions are welcome! If you find a bug or have an enhancement in mind, feel free to open an issue or submit a pull request.
+- Contributions are welcome! If you find a bug or have an enhancement in mind, feel free to open an issue or submit a pull request.
 
 ## Version Checking
-malScraper will automatically check for updates on startup. Make sure you are using the latest version to benefit from new features and improvements.
+- malScraper will automatically check for updates on startup. Make sure you are using the latest version to benefit from new features and improvements.
 
 ## License
-This project is licensed under the [MIT License](https://github.com/Ryan-Monaghan/malScraper/blob/master/LICENSE).
+- This project is licensed under the [MIT License](https://github.com/Ryan-Monaghan/malScraper/blob/master/LICENSE).

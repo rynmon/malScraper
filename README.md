@@ -70,7 +70,4 @@ Contributions are welcome! If you find a bug or have an enhancement in mind, fee
 malScraper will automatically check for updates on startup. Make sure you are using the latest version to benefit from new features and improvements.
 
 ## License
-This project is licensed under the MIT License.
-```rust
-This structure includes a table of contents for better navigation and covers more sections like "Features," "Introduction," and "Installation." Adjust the content and sections as needed for your project.
-
+This project is licensed under the [MIT License](url).

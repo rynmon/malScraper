@@ -38,10 +38,10 @@ malScraper is a modular tool that streamlines the process of scraping and managi
 1. Clone the repository.
    ```python
    git clone https://github.com/your-username/malScraper.git
-2. Clone the repository.
+2. Navigate to the project directory.
    ```python
    cd malScraper
-3. Clone the repository.
+3. Install dependencies.
    ```python
    pip install -r requirements.txt
 

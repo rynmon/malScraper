@@ -10,7 +10,9 @@ malScraper is a modular tool that scrapes a list of Payload Domains, IOC's &amp;
 Version History
 ------------
 1.0 - Initial Implementation, core functionality.
-1.1 - Added Reopen Function - Ability to Reopen a previously composed report.
-1.2 - Added Version Checking - malScraper will now verify if you are using the latest version on startup.
-1.3 - Initial Python conversion.
 
+1.1 - Added Reopen Function - Ability to Reopen a previously composed report.
+
+1.2 - Added Version Checking - malScraper will now verify if you are using the latest version on startup.
+
+1.3 - Initial Python conversion.

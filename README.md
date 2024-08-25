@@ -36,7 +36,7 @@
 ## Installation
 1. Clone the repository.
    ```python
-   git clone https://github.com/your-username/malScraper.git
+   git clone https://github.com/rynmon/malScraper
 2. Navigate to the project directory.
    ```python
    cd malScraper

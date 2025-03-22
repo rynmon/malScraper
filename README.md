@@ -65,15 +65,17 @@ Version 1.4 represents a major milestone for malScraper with a complete rewrite 
 - Optional: pyfiglet for enhanced ASCII art (`pip install pyfiglet`)
 
 ### Windows
+   ```python
 python -m pip install requests
 python -m pip install pyfiglet  # Optional
 python malScraper.py
-
+```
 ### macOS/Linux
+   ```python
 pip3 install requests
 pip3 install pyfiglet  # Optional
 python3 malScraper.py
-
+```
 ## Upgrading from Previous Versions
 Users of previous bash-based versions can simply download the new Python script and run it. The application will maintain the same folder structure and file naming conventions.
 

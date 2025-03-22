@@ -24,7 +24,7 @@
 # malScraper 1.4 - Python Expansion
 
 ## Overview
-Version 1.4 represents a major milestone for malScraper with a complete rewrite in Python, making it fully cross-platform compatible with Windows, macOS, and Linux environments. This update maintains all the key functionality of the original bash script while adding new features, improving performance, and enhancing the user experience.
+Complete rewrite in Python, making it fully cross-platform compatible with Windows, macOS, and Linux environments. Maintains all the key functionality of the original bash script while adding new features, improving performance, and enhancing the user experience.
 
 ## Key Features
 

@@ -1,4 +1,4 @@
-[malScraper v1.3](https://ryan-monaghan.github.io/malScraper/)
+[malScraper v1.4](https://ryan-monaghan.github.io/malScraper/)
 ===============
 ![malScraper Screenshot](https://raw.githubusercontent.com/Ryan-Monaghan/ryanmonaghan.github.io/master/Screenshot%20from%202020-01-23%2014-21-06.png)
 ![2023-12-27_00-37-09](https://github.com/Ryan-Monaghan/malScraper/assets/8824673/5a2fa461-6b67-4070-8df0-cd8c41901fe6)
@@ -24,7 +24,7 @@
 # malScraper 1.4 - Python Expansion
 
 ## Overview
-Version 1.4 represents a major milestone for malScraper with a complete rewrite in Python, making it fully cross-platform compatible with Windows, macOS, and Linux environments. This update maintains all the key functionality of the original bash script while adding new features, improving performance, and enhancing the user experience.
+Complete rewrite in Python, making it fully cross-platform compatible with Windows, macOS, and Linux environments. Maintains all the key functionality of the original bash script while adding new features, improving performance, and enhancing the user experience.
 
 ## Key Features
 

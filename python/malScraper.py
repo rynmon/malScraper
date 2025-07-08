@@ -253,12 +253,9 @@ class MalScraper:
         try:
             if description:
                 print(f"Downloading {description}...")
-            
             response = requests.get(url, stream=True)
             response.raise_for_status()  # Raise exception for HTTP errors
-            
             total_size = int(response.headers.get('content-length', 0))
-            
             with open(output_path, 'wb') as f:
                 if total_size > 0:
                     # If we know the size, show a progress bar
@@ -268,16 +265,11 @@ class MalScraper:
                         if chunk:
                             f.write(chunk)
                             downloaded += len(chunk)
-                            
-                            # Update progress bar
-                            percent = int(downloaded * 100 / total_size)
-                            filled = int(progress_chars * downloaded / total_size)
+                            percent = min(int(downloaded * 100 / total_size), 100)
+                            filled = min(int(progress_chars * downloaded / total_size), progress_chars)
                             bar = '█' * filled + '░' * (progress_chars - filled)
-                            
-                            # Clear line and rewrite progress
                             sys.stdout.write(f"\r{Colors.CYAN}Progress: {Colors.NORMAL}[{bar}] {percent}%")
                             sys.stdout.flush()
-                    
                     sys.stdout.write("\n")  # Newline after progress bar
                 else:
                     # If we don't know the size, just show activity
@@ -289,16 +281,27 @@ class MalScraper:
                             idx = (idx + 1) % len(spinner)
                             sys.stdout.write(f"\rDownloading... {spinner[idx]}")
                             sys.stdout.flush()
-                    
                     sys.stdout.write("\n")  # Newline after spinner
-            
             return True
-            
-        except requests.exceptions.RequestException as e:
-            print(f"{Colors.RED}Error downloading file: {e}{Colors.NORMAL}")
+        except requests.exceptions.HTTPError as e:
+            print(f"{Colors.RED}HTTP error: {e.response.status_code} {e.response.reason}{Colors.NORMAL}")
+            if output_path and os.path.exists(output_path):
+                os.remove(output_path)
+            return False
+        except requests.exceptions.ConnectionError:
+            print(f"{Colors.RED}Connection error: Could not connect to server.{Colors.NORMAL}")
+            if output_path and os.path.exists(output_path):
+                os.remove(output_path)
+            return False
+        except requests.exceptions.Timeout:
+            print(f"{Colors.RED}Timeout error: The request timed out.{Colors.NORMAL}")
+            if output_path and os.path.exists(output_path):
+                os.remove(output_path)
             return False
         except Exception as e:
             print(f"{Colors.RED}Unexpected error during download: {e}{Colors.NORMAL}")
+            if output_path and os.path.exists(output_path):
+                os.remove(output_path)
             return False
     
     def _process_payload_report(self):
@@ -446,11 +449,85 @@ class MalScraper:
             else:
                 print(f"{Colors.RED}Invalid input. Please enter Y or N.{Colors.NORMAL}")
     
+    def _warn_defender(self):
+        print(f"{Colors.YELLOW}{Colors.BOLD}Warning:{Colors.NORMAL} Some reports may be flagged or quarantined by antivirus software (such as Windows Defender) because they contain known malware indicators. These files are for research and defensive use only.")
+
+    def _obfuscate_payload_report(self):
+        """Obfuscate PayloadReport.txt by replacing http with hxxp"""
+        try:
+            with open(self.paths['payload_report'], 'r') as infile:
+                lines = infile.readlines()
+            with open(self.paths['payload_report'], 'w') as outfile:
+                for line in lines:
+                    outfile.write(line.replace('http', 'hxxp'))
+            print(f"{Colors.GREEN}PayloadReport.txt obfuscated (http -> hxxp).{Colors.NORMAL}")
+        except Exception as e:
+            print(f"{Colors.RED}Error obfuscating PayloadReport.txt: {e}{Colors.NORMAL}")
+
+    def _zip_payload_report(self):
+        """Zip PayloadReport.txt as PayloadReport.zip"""
+        import zipfile
+        try:
+            zip_path = self.paths['payload_report'].with_suffix('.zip')
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                zipf.write(self.paths['payload_report'], arcname='PayloadReport.txt')
+            print(f"{Colors.GREEN}PayloadReport.txt zipped as {zip_path}.{Colors.NORMAL}")
+        except Exception as e:
+            print(f"{Colors.RED}Error zipping PayloadReport.txt: {e}{Colors.NORMAL}")
+
+    def _get_payload_option(self):
+        """Prompt user for PayloadReport.txt handling option and return choice."""
+        self._warn_defender()
+        while True:
+            print("\nHow would you like to handle PayloadReport.txt?")
+            print(f"{Colors.CYAN}1{Colors.NORMAL}: Leave as is (may be flagged by antivirus)")
+            print(f"{Colors.CYAN}2{Colors.NORMAL}: Obfuscate IOCs (replace http with hxxp)")
+            print(f"{Colors.CYAN}3{Colors.NORMAL}: Save as zip (PayloadReport.zip)")
+            print(f"{Colors.CYAN}4{Colors.NORMAL}: Both obfuscate and zip")
+            choice = input("Enter your choice (1-4): ").strip()
+            if choice in {'1', '2', '3', '4'}:
+                return choice
+            else:
+                print(f"{Colors.RED}Invalid input. Please enter 1, 2, 3, or 4.{Colors.NORMAL}")
+
+    def _download_payload_feed_with_options(self, choice, return_line_count=False):
+        import requests
+        import time
+        print(f"{Colors.CYAN}Downloading Payload Domains feed...{Colors.NORMAL}")
+        try:
+            response = requests.get(FEEDS["payload_feed"], timeout=30)
+            response.raise_for_status()
+            data = response.text
+            line_count = len(data.splitlines())
+            print(f"{Colors.GREEN}Download complete.{Colors.NORMAL}")
+            time.sleep(1.5)
+        except Exception as e:
+            print(f"{Colors.RED}Failed to download payload report: {e}{Colors.NORMAL}")
+            return (False, None) if return_line_count else False
+        # Obfuscate in memory if needed
+        if choice in {'2', '4'}:
+            data = data.replace('http', 'hxxp')
+        # Write to disk as chosen
+        if choice in {'1', '2'}:
+            with open(self.paths['payload_report'], 'w', encoding='utf-8') as f:
+                f.write(data)
+            print(f"{Colors.GREEN}PayloadReport.txt saved.{Colors.NORMAL}")
+        if choice in {'3', '4'}:
+            import zipfile
+            zip_path = self.paths['payload_report'].with_suffix('.zip')
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr('PayloadReport.txt', data)
+            print(f"{Colors.GREEN}PayloadReport.txt zipped as {zip_path}.{Colors.NORMAL}")
+        return (True, line_count) if return_line_count else True
+
     def full_scan(self):
         """Perform a full scan of all feeds"""
         self._clear_screen()
         print(datetime.datetime.now())
         print(random.choice(SPLASH_TEXTS))
+        
+        # Prompt for PayloadReport.txt handling before any downloads
+        payload_option = self._get_payload_option()
         
         # Remove existing reports if they exist
         for path in self.paths.values():
@@ -463,37 +540,95 @@ class MalScraper:
             f.write("# C2 Servers Report sourced from http://cybercrime-tracker.net/ \n")
             f.write("#############################################\n")
         
-        # Download reports from feeds
-        downloads_successful = True
-        
-        if not self._download_file(FEEDS["c2_feed"], self.paths['c2_report'], "C2 servers report"):
-            downloads_successful = False
-        
-        if not self._download_file(FEEDS["hex_feed"], self.paths['hex_report'], "Hex report"):
-            downloads_successful = False
-        
-        if not self._download_file(FEEDS["payload_feed"], self.paths['payload_report'], "Payload domains"):
-            downloads_successful = False
-        
-        if not self._download_file(FEEDS["haus_mal_down"], self.paths['haus_mal_down'], "URLHaus Malware downloads"):
-            downloads_successful = False
-        
-        if not self._download_file(FEEDS["phish_tank"], self.paths['phish_tank'], "PhishTank data"):
-            downloads_successful = False
-        
-        # Process payload report to create AMP report (strip domains)
-        if self.paths['payload_report'].exists():
-            if not self._process_payload_report():
-                downloads_successful = False
-        
+        status = {}
+        payload_line_count = None
+        import time
+        print(f"{Colors.BOLD}Starting downloads...{Colors.NORMAL}\n")
+        # C2 servers report
+        print(f"C2 servers report:")
+        start = time.time()
+        if self._download_file(FEEDS["c2_feed"], self.paths['c2_report'], "C2 servers report"):
+            elapsed = time.time() - start
+            print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
+            print(f"{Colors.GREEN}{self.paths['c2_report']} saved.{Colors.NORMAL}\n")
+            status["C2 servers report"] = True
+        else:
+            print(f"{Colors.RED}Failed{Colors.NORMAL}\n")
+            status["C2 servers report"] = False
+        # Hex report
+        print(f"Hex report:")
+        start = time.time()
+        if self._download_file(FEEDS["hex_feed"], self.paths['hex_report'], "Hex report"):
+            elapsed = time.time() - start
+            print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
+            print(f"{Colors.GREEN}{self.paths['hex_report']} saved.{Colors.NORMAL}\n")
+            status["Hex report"] = True
+        else:
+            print(f"{Colors.RED}Failed{Colors.NORMAL}\n")
+            status["Hex report"] = False
+        # Payload report (special handling)
+        print(f"Payload domains:")
+        start = time.time()
+        payload_success, payload_line_count = self._download_payload_feed_with_options(payload_option, return_line_count=True)
+        elapsed = time.time() - start
+        if payload_success:
+            print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
+            # Print saved file(s) info for payload
+            if payload_option in {'1', '2'}:
+                print(f"{Colors.GREEN}{self.paths['payload_report']} saved.{Colors.NORMAL}")
+            if payload_option in {'3', '4'}:
+                zip_path = self.paths['payload_report'].with_suffix('.zip')
+                print(f"{Colors.GREEN}{zip_path} saved.{Colors.NORMAL}")
+            print()
+            if self.paths['payload_report'].exists():
+                if not self._process_payload_report():
+                    status["Payload domains"] = False
+                else:
+                    status["Payload domains"] = True
+            else:
+                status["Payload domains"] = True
+        else:
+            print(f"{Colors.RED}Failed{Colors.NORMAL}\n")
+            status["Payload domains"] = False
+        # URLHaus Malware downloads
+        print(f"URLHaus Malware downloads:")
+        start = time.time()
+        if self._download_file(FEEDS["haus_mal_down"], self.paths['haus_mal_down'], "URLHaus Malware downloads"):
+            elapsed = time.time() - start
+            print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
+            print(f"{Colors.GREEN}{self.paths['haus_mal_down']} saved.{Colors.NORMAL}\n")
+            status["URLHaus Malware downloads"] = True
+        else:
+            print(f"{Colors.RED}Failed{Colors.NORMAL}\n")
+            status["URLHaus Malware downloads"] = False
+        # PhishTank data
+        print(f"PhishTank data:")
+        start = time.time()
+        if self._download_file(FEEDS["phish_tank"], self.paths['phish_tank'], "PhishTank data"):
+            elapsed = time.time() - start
+            print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
+            print(f"{Colors.GREEN}{self.paths['phish_tank']} saved.{Colors.NORMAL}\n")
+            status["PhishTank data"] = True
+        else:
+            print(f"{Colors.RED}Failed{Colors.NORMAL}\n")
+            status["PhishTank data"] = False
+        time.sleep(1.5)
+        # Print summary
+        succeeded = [k for k, v in status.items() if v]
+        failed = [k for k, v in status.items() if not v]
+        print(f"{Colors.BOLD}Download Summary:{Colors.NORMAL}")
+        print(f"- {len(succeeded)}/{len(status)} downloads succeeded.")
+        if payload_line_count is not None:
+            print(f"- Payload domains: {payload_line_count} lines")
+        if failed:
+            print(f"- {len(failed)} download(s) failed: {', '.join(failed)}.")
+        print()
+        if not all(status.values()):
+            print(f"{Colors.YELLOW}{Colors.BOLD}Warning: {Colors.NORMAL}Some downloads may have failed. Check the reports.{Colors.NORMAL}\n")
+        input("Press Enter to continue...")
         # Clear screen and show directory listing
         self._clear_screen()
-        
-        if not downloads_successful:
-            print(f"{Colors.YELLOW}{Colors.BOLD}Warning: {Colors.NORMAL}Some downloads may have failed. Check the reports.{Colors.NORMAL}\n")
-        
         self._print_directory_list()
-        
         # Return to home menu
         self.show_home()
 
@@ -503,17 +638,23 @@ class MalScraper:
         print(datetime.datetime.now())
         print(random.choice(SPLASH_TEXTS))
         
+        # Prompt for PayloadReport.txt handling before any downloads
+        payload_option = self._get_payload_option()
+        
         # Remove existing reports
         for path in [self.paths['payload_report'], self.paths['top_100']]:
             if isinstance(path, Path) and path.is_file():
                 path.unlink()
         
-        # Download payload report
-        if self._download_file(FEEDS["payload_feed"], self.paths['payload_report'], "Payload domains"):
-            self._process_payload_report()
+        # Download payload report with options (in-memory)
+        payload_success, payload_line_count = self._download_payload_feed_with_options(payload_option, return_line_count=True)
+        if payload_success:
+            if self.paths['payload_report'].exists():
+                self._process_payload_report()
         else:
             print(f"{Colors.RED}Failed to download payload report.{Colors.NORMAL}")
             time.sleep(2)
+        time.sleep(1.5)
         # Return to home menu
         self.show_home()
     

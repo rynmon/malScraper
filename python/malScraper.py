@@ -88,7 +88,7 @@ except ImportError:
     HAS_PYFIGLET = False
 
 # Current version - Update this manually when releasing a new version
-CURRENT_VERSION = "1.4.4"
+CURRENT_VERSION = "1.4.5"
 
 # Splash-text for loading screens
 SPLASH_TEXTS = [

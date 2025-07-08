@@ -41,6 +41,34 @@ if missing:
         print("Cannot continue without required packages. Exiting.")
     sys.exit(1)
 
+# --- Atomic update check (before any other logic) ---
+UPDATE_FLAG = Path(__file__).parent / "update_pending.json"
+if UPDATE_FLAG.exists():
+    try:
+        with open(UPDATE_FLAG, "r") as f:
+            update_info = json.load(f)
+        new_script_path = Path(update_info["new_script_path"])
+        current_script = Path(os.path.abspath(sys.argv[0]))
+        backup_path = current_script.with_suffix('.bak')
+        # Backup current script
+        import shutil
+        shutil.copy2(current_script, backup_path)
+        # Replace with new script
+        shutil.copy2(new_script_path, current_script)
+        print(f"{Colors.GREEN}{Colors.BOLD}Update successfully installed!{Colors.NORMAL}")
+        print(f"{Colors.CYAN}A backup of your previous version was saved to:{Colors.NORMAL} {backup_path}")
+        print(f"{Colors.CYAN}You are now running the latest version!{Colors.NORMAL}")
+        # Clean up
+        UPDATE_FLAG.unlink()
+        # Optionally, remove temp dir
+        temp_dir = Path(update_info.get("temp_dir", ""))
+        if temp_dir and temp_dir.exists():
+            shutil.rmtree(temp_dir)
+    except Exception as e:
+        print(f"{Colors.RED}{Colors.BOLD}Error finalizing update: {e}{Colors.NORMAL}")
+        print(f"Continuing with current version.")
+        UPDATE_FLAG.unlink()
+
 # Third-party imports
 try:
     import requests
@@ -56,7 +84,7 @@ except ImportError:
     HAS_PYFIGLET = False
 
 # Current version - Update this manually when releasing a new version
-CURRENT_VERSION = "1.4.2"
+CURRENT_VERSION = "1.4.1"
 
 # Splash-text for loading screens
 SPLASH_TEXTS = [
@@ -513,16 +541,17 @@ class MalScraper:
         self._clear_screen()
         print(tut_text)
     
-    def install_update(self):
-        """Install the downloaded update"""
+    def install_update(self, version=None, download_url=None, release_data=None):
+        """Install the downloaded update (atomic, on next launch)"""
         import zipfile
         import shutil
+        import json
         
-        # First check for updates
-        update_available, version, download_url, release_data = self._check_for_updates()
-        
-        if not update_available:
-            return
+        # Only check for updates if not already provided
+        if not (version and download_url and release_data):
+            update_available, version, download_url, release_data = self._check_for_updates()
+            if not update_available:
+                return
         
         # Download the update
         update_file = self.paths['updates_dir'] / f"malScraper-{version}.zip"
@@ -531,16 +560,15 @@ class MalScraper:
             time.sleep(2)
             return
         
-        print(f"{Colors.CYAN}Installing update...{Colors.NORMAL}")
+        print(f"{Colors.CYAN}Preparing update...{Colors.NORMAL}")
         
         try:
             # Get the current script path
             current_script = Path(os.path.abspath(sys.argv[0]))
-            script_dir = current_script.parent
             script_name = current_script.name
             
             # Create a temporary directory for extraction
-            temp_dir = self.paths['updates_dir'] / "temp"
+            temp_dir = self.paths['updates_dir'] / f"temp_{version}"
             if temp_dir.exists():
                 shutil.rmtree(temp_dir)
             temp_dir.mkdir(exist_ok=True)
@@ -561,30 +589,17 @@ class MalScraper:
                 time.sleep(2)
                 return
             
-            # Create backup of current script
-            backup_path = current_script.with_suffix('.bak')
-            shutil.copy2(current_script, backup_path)
-            
-            # Copy new script over current script
-            shutil.copy2(new_script, current_script)
-            
-            print(f"{Colors.GREEN}{Colors.BOLD}Update successfully installed!{Colors.NORMAL}")
-            print(f"{Colors.CYAN}A backup of your previous version was saved to:{Colors.NORMAL} {backup_path}")
-            print(f"{Colors.CYAN}Restart the application to use the new version.{Colors.NORMAL}")
-            
-            time.sleep(3)
-            
-            # Ask if user wants to restart now
-            restart = input(f"{Colors.GREEN}Would you like to restart now? (Y/N): {Colors.NORMAL}").upper()
-            if restart in ['Y', 'YES']:
-                print(f"{Colors.CYAN}Restarting...{Colors.NORMAL}")
-                time.sleep(1)
-                # Restart the script
-                python = sys.executable
-                os.execl(python, python, str(current_script))
-            
+            # Write update flag for atomic replacement on next launch
+            update_flag = Path(__file__).parent / "update_pending.json"
+            with open(update_flag, "w") as f:
+                json.dump({"new_script_path": str(new_script), "temp_dir": str(temp_dir)}, f)
+            print(f"{Colors.GREEN}{Colors.BOLD}Update downloaded!{Colors.NORMAL}")
+            print(f"{Colors.CYAN}The new version will be installed the next time you start malScraper.{Colors.NORMAL}")
+            print(f"{Colors.CYAN}Please exit and restart the application to complete the update.{Colors.NORMAL}")
+            input("Press Enter to exit and complete the update...")
+            sys.exit(0)
         except Exception as e:
-            print(f"{Colors.RED}{Colors.BOLD}Error installing update: {e}{Colors.NORMAL}")
+            print(f"{Colors.RED}{Colors.BOLD}Error preparing update: {e}{Colors.NORMAL}")
             time.sleep(2)
     
     def show_home(self):
@@ -635,7 +650,9 @@ class MalScraper:
         self.ensure_directories()
         
         # Check for updates
-        self._check_for_updates()
+        update_available, version, download_url, release_data = self._check_for_updates()
+        if update_available:
+            self.install_update(version, download_url, release_data)
         
         # Show initial banner and help
         self.show_home()

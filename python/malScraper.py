@@ -16,6 +16,30 @@ import signal
 import json
 from pathlib import Path
 import time
+import importlib.util
+
+# Colors for terminal output (works on Windows, Mac, Linux)
+class Colors:
+    RED = '\033[0;31m'
+    GREEN = '\033[0;32m'
+    YELLOW = '\033[1;33m'
+    PURPLE = '\033[1;35m'
+    CYAN = '\033[1;36m'
+    BOLD = '\033[1m'
+    NORMAL = '\033[0m'
+
+required = {"requests", "pyfiglet"}
+missing = [pkg for pkg in required if importlib.util.find_spec(pkg) is None]
+
+if missing:
+    print(f"{Colors.YELLOW}{Colors.BOLD}Missing required packages: {', '.join(missing)}{Colors.NORMAL}")
+    choice = input("Would you like to install them now? (Y/N): ").strip().lower()
+    if choice in ("y", "yes"):
+        subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
+        print("Please restart the application.")
+    else:
+        print("Cannot continue without required packages. Exiting.")
+    sys.exit(1)
 
 # Third-party imports
 try:
@@ -33,16 +57,6 @@ except ImportError:
 
 # Current version - Update this manually when releasing a new version
 CURRENT_VERSION = "1.4.1"
-
-# Colors for terminal output (works on Windows, Mac, Linux)
-class Colors:
-    RED = '\033[0;31m'
-    GREEN = '\033[0;32m'
-    YELLOW = '\033[1;33m'
-    PURPLE = '\033[1;35m'
-    CYAN = '\033[1;36m'
-    BOLD = '\033[1m'
-    NORMAL = '\033[0m'
 
 # Splash-text for loading screens
 SPLASH_TEXTS = [
@@ -116,6 +130,13 @@ class MalScraper:
         self.base_dir.mkdir(parents=True, exist_ok=True)
         (self.base_dir / "Phishing").mkdir(exist_ok=True)
         (self.base_dir / "Updates").mkdir(exist_ok=True)
+
+    def _get_terminal_width(self):
+        """Get the current terminal width, or return 80 if unavailable"""
+        try:
+            return os.get_terminal_size().columns
+        except OSError:
+            return 80  # Fallback width
     
     def _clear_screen(self):
         """Clear the terminal screen"""
@@ -124,19 +145,24 @@ class MalScraper:
     def _print_banner(self):
         """Print the application banner"""
         self._clear_screen()
+        width = self._get_terminal_width()
         
         if HAS_PYFIGLET:
             # Use pyfiglet with a nice font if available
-            print(pyfiglet.figlet_format("malScraper", font="slant"))
+            banner = pyfiglet.figlet_format("malScraper", font="slant")
+            for line in banner.splitlines():
+                print(line[:width])
         else:
             # Fallback to a hand-crafted ASCII art
-            print(r"""
+            ascii_art = r"""
   __  __   __ _    _       ___   ___  ____    __    ____  ____  ____ 
  |  \/  | / _` |  | |     / __| / __||  _ \  / _\  |  _ \|  __||  _ \
  | |\/| || (_| |  | |__  | (__ | (__ | |_) |/    \ | |_) )  _| | |_) )
  |_|  |_| \__,_|  |____| \___|  \___||____/ \_/\_/ |  __/|____||  __/
                                                     |_|         |_|    
-            """)
+            """
+            for line in ascii_art.splitlines():
+                print(line[:width])
         
         # Application info
         print(f"\t{Colors.PURPLE}Tool\t :: malScraper")

@@ -33,13 +33,17 @@ missing = [pkg for pkg in required if importlib.util.find_spec(pkg) is None]
 
 if missing:
     print(f"{Colors.YELLOW}{Colors.BOLD}Missing required packages: {', '.join(missing)}{Colors.NORMAL}")
-    choice = input("Would you like to install them now? (Y/N): ").strip().lower()
-    if choice in ("y", "yes"):
-        subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
-        print("Please restart the application.")
-    else:
-        print("Cannot continue without required packages. Exiting.")
-    sys.exit(1)
+    while True:
+        choice = input("Would you like to install them now? (Y/N): ").strip().lower()
+        if choice in ("y", "yes"):
+            subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
+            print("Please restart the application.")
+            sys.exit(1)
+        elif choice in ("n", "no"):
+            print("Cannot continue without required packages. Exiting.")
+            sys.exit(1)
+        else:
+            print(f"{Colors.RED}Invalid input. Please enter Y or N.{Colors.NORMAL}")
 
 # --- Atomic update check (before any other logic) ---
 UPDATE_FLAG = Path(__file__).parent / "update_pending.json"
@@ -84,7 +88,7 @@ except ImportError:
     HAS_PYFIGLET = False
 
 # Current version - Update this manually when releasing a new version
-CURRENT_VERSION = "1.4.3"
+CURRENT_VERSION = "1.4.4"
 
 # Splash-text for loading screens
 SPLASH_TEXTS = [
@@ -195,7 +199,7 @@ class MalScraper:
         # Application info
         print(f"\t{Colors.PURPLE}Tool\t :: malScraper")
         print(f"\tAuthor\t :: Ryan Monaghan")
-        print(f"\tTwitter\t :: @rynmonaghan")
+        print(f"\tBluesky\t :: https://bsky.app/profile/rynmon.ie")
         print(f"\tWebsite\t :: https://rynmon.ie")
         print(f"\tGithub\t :: https://github.com/Ryan-Monaghan/malScraper")
         print(f"\tBranch\t :: Stable")
@@ -216,6 +220,7 @@ class MalScraper:
 
     def _print_directory_list(self):
         """Display the directory paths where reports are stored"""
+        self._clear_screen()
         print(f"{Colors.GREEN}{Colors.BOLD}Success - Files written to:{Colors.NORMAL}{Colors.NORMAL}")
         print(f"{Colors.GREEN}{Colors.BOLD}1. {Colors.NORMAL}{Colors.RED}{Colors.BOLD}Payload Domains:{Colors.NORMAL}{Colors.NORMAL} {self.paths['payload_report']}")
         print(f"{Colors.GREEN}{Colors.BOLD}2. {Colors.NORMAL}{Colors.RED}{Colors.BOLD}AMP Report:{Colors.NORMAL}{Colors.NORMAL} {self.paths['amp_report']}")
@@ -398,14 +403,16 @@ class MalScraper:
                 if len(notes_lines) > 5:
                     print(f"  {Colors.YELLOW}...and more{Colors.NORMAL}")
                 
-                option = input(f"\n{Colors.GREEN}Would you like to update now? (Y/N): {Colors.NORMAL}").upper()
-                
-                if option in ['YES', 'Y']:
-                    return True, latest_version, download_url, release_data
-                else:
-                    print("Continuing with current version...")
-                    time.sleep(1)
-                    return False, None, None, None
+                while True:
+                    option = input(f"\n{Colors.GREEN}Would you like to update now? (Y/N): {Colors.NORMAL}").strip().upper()
+                    if option in ['YES', 'Y']:
+                        return True, latest_version, download_url, release_data
+                    elif option in ['NO', 'N']:
+                        print("Continuing with current version...")
+                        time.sleep(1)
+                        return False, None, None, None
+                    else:
+                        print(f"{Colors.RED}Invalid input. Please enter Y or N.{Colors.NORMAL}")
                 
         except requests.exceptions.ConnectionError:
             print(f"{Colors.YELLOW}Could not check for updates: No internet connection{Colors.NORMAL}")
@@ -430,9 +437,14 @@ class MalScraper:
     
     def _confirm_exit(self):
         """Confirm exit"""
-        option = input("Are you sure? (Y/N) ").upper()
-        if option in ["Y", "YES"]:
-            self._handle_exit()
+        while True:
+            option = input("Are you sure? (Y/N) ").strip().upper()
+            if option in ["Y", "YES"]:
+                self._handle_exit()
+            elif option in ["N", "NO"]:
+                break
+            else:
+                print(f"{Colors.RED}Invalid input. Please enter Y or N.{Colors.NORMAL}")
     
     def full_scan(self):
         """Perform a full scan of all feeds"""
@@ -482,9 +494,9 @@ class MalScraper:
         
         self._print_directory_list()
         
-        # Ask which feed to open
-        self._prompt_open_report()
-    
+        # Return to home menu
+        self.show_home()
+
     def quick_scan(self):
         """Perform a quick scan - only download the most recent 100 payload domains"""
         self._clear_screen()
@@ -499,36 +511,41 @@ class MalScraper:
         # Download payload report
         if self._download_file(FEEDS["payload_feed"], self.paths['payload_report'], "Payload domains"):
             self._process_payload_report()
-            self._open_file(self.paths['top_100'])
         else:
             print(f"{Colors.RED}Failed to download payload report.{Colors.NORMAL}")
             time.sleep(2)
+        # Return to home menu
+        self.show_home()
     
-    def _prompt_open_report(self):
+    def _prompt_open_report(self, first_time=False):
         """Prompt user to open a report"""
-        option = input("Which feed would you like to open? ")
-        print()
-        
-        valid_options = {
-            "1": self.paths['payload_report'],
-            "2": self.paths['amp_report'],
-            "3": self.paths['c2_report'],
-            "4": self.paths['hex_report'],
-            "5": self.paths['haus_mal_down'],
-            "6": self.paths['phish_tank'],
-            "7": self.paths['top_100']
-        }
-        
-        if option in valid_options:
-            self._open_file(valid_options[option])
-        elif option.lower() == "home":
-            return
-        else:
-            self._clear_screen()
-            self._print_directory_list()
-            print(f"{Colors.RED}{Colors.BOLD}Error: {Colors.NORMAL}Invalid Option.")
-            self._prompt_open_report()
-    
+        first = first_time
+        while True:
+            if not first:
+                self._clear_screen()
+                self._print_directory_list()
+            else:
+                first = False
+            option = input("Which feed would you like to open? ")
+            print()
+            valid_options = {
+                "1": self.paths['payload_report'],
+                "2": self.paths['amp_report'],
+                "3": self.paths['c2_report'],
+                "4": self.paths['hex_report'],
+                "5": self.paths['haus_mal_down'],
+                "6": self.paths['phish_tank'],
+                "7": self.paths['top_100']
+            }
+            if option in valid_options:
+                self._open_file(valid_options[option])
+                break
+            elif option.lower() == "home":
+                break
+            else:
+                print(f"{Colors.RED}{Colors.BOLD}Error: {Colors.NORMAL}Invalid Option.")
+                input("Press Enter to try again...")
+
     def reopen(self):
         """Allow user to reopen a previously downloaded report"""
         self._clear_screen()
@@ -537,7 +554,33 @@ class MalScraper:
     
     def tutorial(self):
         """Display the tutorial text"""
-        tut_text = f"\n{Colors.BOLD}MalScraper\n\n{Colors.BOLD}NAME\n - {Colors.NORMAL}malScraper.py - malScraper scrapes a list of Payload Domains, IOC's & C2 IPs from various feeds, for easy blacklisting.\n\n{Colors.BOLD}SYNOPSIS\n python malScraper.py {Colors.NORMAL}\n{Colors.BOLD}e.g. - {Colors.NORMAL}python malScraper.py \n\n{Colors.BOLD}DESCRIPTION\n - {Colors.NORMAL}A cross-platform tool for collecting malware information from various feeds.\n\n{Colors.BOLD}WORKFLOW\n - {Colors.NORMAL}1. Run Quick-Scan for a fast check of the most recent 100 domains\n - 2. Run Full-Scan to gather comprehensive data from all sources\n - 3. Use the numbered menu to open specific reports\n - 4. Reports are saved to your Desktop (Linux/Mac) or Documents (Windows) folder\n"
+        tut_text = f"""
+{Colors.BOLD}MalScraper Tutorial{Colors.NORMAL}
+
+{Colors.BOLD}NAME{Colors.NORMAL}
+ - malScraper.py: Scrapes a list of Payload Domains, IOC's & C2 IPs from various feeds for easy blacklisting.
+
+{Colors.BOLD}SYNOPSIS{Colors.NORMAL}
+ - Run: {Colors.CYAN}python malScraper.py{Colors.NORMAL}
+ - Example: {Colors.CYAN}python malScraper.py{Colors.NORMAL}
+
+{Colors.BOLD}DESCRIPTION{Colors.NORMAL}
+ - A cross-platform tool for collecting malware information from various feeds.
+
+{Colors.BOLD}WORKFLOW{Colors.NORMAL}
+  1. Run {Colors.CYAN}Quick-Scan{Colors.NORMAL} for a fast check of the most recent 100 domains.
+  2. Run {Colors.CYAN}Full-Scan{Colors.NORMAL} to gather comprehensive data from all sources.
+  3. Use the numbered menu to open specific reports.
+  4. Reports are saved to your {Colors.CYAN}Desktop{Colors.NORMAL} (Mac/Linux) or {Colors.CYAN}Documents{Colors.NORMAL} (Windows) folder.
+
+{Colors.BOLD}MENU NAVIGATION{Colors.NORMAL}
+ - Type {Colors.CYAN}HELP{Colors.NORMAL} to see available commands.
+ - Type {Colors.CYAN}TUTORIAL{Colors.NORMAL} to view this tutorial again.
+ - Type {Colors.CYAN}UPDATE{Colors.NORMAL} to check for updates.
+ - Type {Colors.CYAN}QUIT{Colors.NORMAL} to exit the application.
+
+{Colors.BOLD}TIP:{Colors.NORMAL} For more information, visit the GitHub page or use the help menu.
+"""
         self._clear_screen()
         print(tut_text)
     
@@ -606,7 +649,7 @@ class MalScraper:
         """Display the home menu"""
         self._print_banner()
         self._print_help()
-    
+
     def process_command(self, option):
         """Process user command input"""
         option = option.upper()
@@ -624,6 +667,7 @@ class MalScraper:
             self._clear_screen()
         
         elif option in ["HELP", "GET-HELP", "?", "-?", "/?", "MENU"]:
+            self._clear_screen()
             self._print_help()
         
         elif option in ["BACK", "CD ..", "HOME"]:
@@ -656,7 +700,7 @@ class MalScraper:
         
         # Show initial banner and help
         self.show_home()
-        
+
         # Main application loop
         while True:
             try:

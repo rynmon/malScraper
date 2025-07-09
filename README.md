@@ -50,6 +50,7 @@ Complete rewrite in Python, making it fully cross-platform compatible with Windo
 - Progress bars for downloads
 - Clear file save locations after each download
 - User prompt for obfuscating/zipping payload report
+- **Tab Completion**: Auto-complete commands by pressing TAB (requires readline/pyreadline)
 
 ### Improved Update System
 - Detailed version checking with GitHub API integration
@@ -74,17 +75,22 @@ Complete rewrite in Python, making it fully cross-platform compatible with Windo
 ### Requirements
 - Python 3.6 or higher
 - Requests library (`pip install requests`)
+- prompt_toolkit for tab completion (`pip install prompt_toolkit`)
 - Optional: pyfiglet for enhanced ASCII art (`pip install pyfiglet`)
+- Optional: pyreadline for tab completion on Windows (`pip install pyreadline`)
 
 ### Windows
    ```python
 python -m pip install requests
+python -m pip install prompt_toolkit  # For tab completion
 python -m pip install pyfiglet  # Optional
+python -m pip install pyreadline  # Optional, for additional readline support
 python malScraper.py
 ```
 ### macOS/Linux
    ```python
 pip3 install requests
+pip3 install prompt_toolkit  # For tab completion
 pip3 install pyfiglet  # Optional
 python3 malScraper.py
 ```
@@ -97,6 +103,12 @@ Users of previous bash-based versions can simply download the new Python script 
 - Antivirus software may flag or quarantine reports containing known malware indicators (see [Antivirus Warning](#antivirus-warning))
 
 ## Version History
+- **1.4.5** - Tab Completion & Enhanced UX
+  - Added robust tab completion for all commands (press TAB to auto-complete)
+  - Uses prompt_toolkit for reliable tab completion across all platforms
+  - Works on macOS, Linux, and Windows without additional dependencies
+  - Enhanced help menu with tab completion tips
+  - Improved command discovery and user experience
 - **1.4.4** - Download Experience & Antivirus Handling
   - Cleaned up download output: only the download name, progress bar, and a single success/failure line per file.
   - After each successful download, the full path of the file is displayed.

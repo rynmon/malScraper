@@ -18,6 +18,25 @@ from pathlib import Path
 import time
 import importlib.util
 
+# Try to import prompt_toolkit for robust tab completion (works everywhere)
+try:
+    from prompt_toolkit import prompt
+    from prompt_toolkit.completion import WordCompleter
+    HAS_PROMPT_TOOLKIT = True
+except ImportError:
+    HAS_PROMPT_TOOLKIT = False
+
+# Fallback to readline for tab completion (not available on Windows by default)
+try:
+    import readline
+    HAS_READLINE = True
+    # Set up readline globally for all input() calls
+    readline.parse_and_bind("tab: complete")
+    readline.parse_and_bind("set completion-ignore-case on")
+    readline.parse_and_bind("set show-all-if-ambiguous on")
+except ImportError:
+    HAS_READLINE = False
+
 # Colors for terminal output (works on Windows, Mac, Linux)
 class Colors:
     RED = '\033[0;31m'
@@ -27,6 +46,54 @@ class Colors:
     CYAN = '\033[1;36m'
     BOLD = '\033[1m'
     NORMAL = '\033[0m'
+
+# Command completer class for tab completion
+class CommandCompleter:
+    """Provides tab completion for malScraper commands"""
+    
+    def __init__(self):
+        # Define all available commands and their aliases
+        self.commands = {
+            # Main scan commands
+            'full': ['full', 'full-scan', 'fscan'],
+            'quick': ['quick', 'quick-scan', 'qscan'],
+            
+            # Navigation commands
+            'help': ['help', 'get-help', '?', '-?', '/?', 'menu'],
+            'tutorial': ['tutorial'],
+            'home': ['home', 'back', 'cd ..'],
+            'clear': ['clear', 'clear-host', 'cls'],
+            
+            # File operations
+            'open': ['open', 'reopen'],
+            
+            # System commands
+            'quit': ['quit', 'exit'],
+            'update': ['install', 'update']
+        }
+        
+        # Flatten the commands list for easier searching
+        self.all_commands = []
+        for cmd_list in self.commands.values():
+            self.all_commands.extend(cmd_list)
+        
+        # Create prompt_toolkit completer if available
+        if HAS_PROMPT_TOOLKIT:
+            self.prompt_completer = WordCompleter(self.all_commands, ignore_case=True)
+    
+    def complete(self, text, state):
+        """Complete function for readline (fallback)"""
+        if state == 0:
+            # This is the first time for this text, so build a match list
+            if text:
+                self.matches = [s for s in self.all_commands if s.lower().startswith(text.lower())]
+            else:
+                self.matches = self.all_commands[:]
+        
+        try:
+            return self.matches[state]
+        except IndexError:
+            return None
 
 required = {"requests", "pyfiglet"}
 missing = [pkg for pkg in required if importlib.util.find_spec(pkg) is None]
@@ -134,6 +201,20 @@ class MalScraper:
         signal.signal(signal.SIGINT, self._handle_exit)  
         if platform.system() != "Windows":
             signal.signal(signal.SIGTERM, self._handle_exit)
+        
+        # Setup tab completion
+        self.completer = CommandCompleter()
+        
+        if HAS_PROMPT_TOOLKIT:
+            # Use prompt_toolkit for robust tab completion
+            pass
+        elif HAS_READLINE:
+            # Fallback to readline
+            readline.set_completer(self.completer.complete)
+        elif platform.system() == "Windows":
+            # On Windows, suggest installing pyreadline for tab completion
+            print(f"{Colors.YELLOW}💡 Tip: Install 'pyreadline' for tab completion on Windows: pip install pyreadline{Colors.NORMAL}")
+            time.sleep(2)
     
     def _get_base_dir(self):
         """Determine the appropriate base directory for the platform"""
@@ -203,20 +284,30 @@ class MalScraper:
         print(f"\tWebsite\t :: https://rynmon.ie")
         print(f"\tGithub\t :: https://github.com/rynmon/malScraper")
         print(f"\tBranch\t :: Stable")
-        print(f"\tVersion\t :: {CURRENT_VERSION} (Python-compatible){Colors.NORMAL}\n")
+        print(f"\tVersion\t :: {CURRENT_VERSION} (Python-compatible)")
+        if HAS_PROMPT_TOOLKIT:
+            print(f"\t{Colors.CYAN}Tab Completion{Colors.NORMAL} :: {Colors.GREEN}Enabled (prompt_toolkit){Colors.NORMAL}")
+        elif HAS_READLINE:
+            print(f"\t{Colors.CYAN}Tab Completion{Colors.NORMAL} :: {Colors.GREEN}Enabled (readline){Colors.NORMAL}")
+        else:
+            print(f"\t{Colors.CYAN}Tab Completion{Colors.NORMAL} :: {Colors.YELLOW}Not Available{Colors.NORMAL}")
+        print(f"{Colors.NORMAL}\n")
     
     def _print_help(self):
         """Display the help menu"""
         print(f"{Colors.CYAN}HELP MENU{Colors.NORMAL} {Colors.BOLD}::{Colors.NORMAL} Available {Colors.YELLOW}options{Colors.NORMAL} shown below:\n")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Tutorial{Colors.NORMAL} of how to use this tool\t\t\t\t\t{Colors.YELLOW}TUTORIAL{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} Show this {Colors.CYAN}Help{Colors.NORMAL} Menu\t\t\t\t\t\t\t{Colors.YELLOW}HELP,GET-HELP,?,-?,/?,MENU{Colors.NORMAL}")
+        print(f"{Colors.BOLD}[*]{Colors.NORMAL} Show this {Colors.CYAN}Help{Colors.NORMAL} Menu\t\t\t\t\t\t\t{Colors.YELLOW}HELP,GET-f  ,?,-?,/?,MENU{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Clear{Colors.NORMAL} screen\t\t\t\t\t\t\t{Colors.YELLOW}CLEAR,CLEAR-HOST,CLS{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} Return to {Colors.CYAN}Home{Colors.NORMAL} Menu\t\t\t\t\t\t\t{Colors.YELLOW}HOME,BACK,CD ..{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Open{Colors.NORMAL} an existing report\t\t\t\t\t\t{Colors.YELLOW}OPEN,REOPEN{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Quit{Colors.NORMAL} malScraper\t\t\t\t\t\t\t{Colors.YELLOW}QUIT,EXIT{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Install{Colors.NORMAL} the latest {Colors.CYAN}update{Colors.NORMAL}\t\t\t\t\t\t{Colors.YELLOW}INSTALL,UPDATE{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} Perform {Colors.CYAN}Full-Scan{Colors.NORMAL} (Note this may take some time)\t\t\t{Colors.YELLOW}FULL,FULL-SCAN,FSCAN{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} Perform {Colors.CYAN}Quick-Scan{Colors.NORMAL} (Most recent 100 Payload Domains)\t\t{Colors.YELLOW}QUICK,QUICK-SCAN,QSCAN{Colors.NORMAL}\n")
+        print(f"{Colors.BOLD}[*]{Colors.NORMAL} Perform {Colors.CYAN}Quick-Scan{Colors.NORMAL} (Most recent 100 Payload Domains)\t\t{Colors.YELLOW}QUICK,QUICK-SCAN,QSCAN{Colors.NORMAL}")
+        if HAS_PROMPT_TOOLKIT or HAS_READLINE:
+            print(f"\n{Colors.CYAN}💡 Tip:{Colors.NORMAL} Press {Colors.YELLOW}TAB{Colors.NORMAL} to auto-complete commands!")
+        print()
 
     def _print_directory_list(self):
         """Display the directory paths where reports are stored"""
@@ -503,7 +594,9 @@ class MalScraper:
             time.sleep(1.5)
         except Exception as e:
             print(f"{Colors.RED}Failed to download payload report: {e}{Colors.NORMAL}")
-            return (False, None) if return_line_count else False
+            if return_line_count:
+                return False, None
+            return False
         # Obfuscate in memory if needed
         if choice in {'2', '4'}:
             data = data.replace('http', 'hxxp')
@@ -518,7 +611,9 @@ class MalScraper:
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 zipf.writestr('PayloadReport.txt', data)
             print(f"{Colors.GREEN}PayloadReport.txt zipped as {zip_path}.{Colors.NORMAL}")
-        return (True, line_count) if return_line_count else True
+        if return_line_count:
+            return True, line_count
+        return True
 
     def full_scan(self):
         """Perform a full scan of all feeds"""
@@ -569,7 +664,12 @@ class MalScraper:
         # Payload report (special handling)
         print(f"Payload domains:")
         start = time.time()
-        payload_success, payload_line_count = self._download_payload_feed_with_options(payload_option, return_line_count=True)
+        result = self._download_payload_feed_with_options(payload_option, return_line_count=True)
+        if isinstance(result, tuple):
+            payload_success, payload_line_count = result
+        else:
+            payload_success = result
+            payload_line_count = None
         elapsed = time.time() - start
         if payload_success:
             print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
@@ -647,7 +747,12 @@ class MalScraper:
                 path.unlink()
         
         # Download payload report with options (in-memory)
-        payload_success, payload_line_count = self._download_payload_feed_with_options(payload_option, return_line_count=True)
+        result = self._download_payload_feed_with_options(payload_option, return_line_count=True)
+        if isinstance(result, tuple):
+            payload_success, payload_line_count = result
+        else:
+            payload_success = result
+            payload_line_count = None
         if payload_success:
             if self.paths['payload_report'].exists():
                 self._process_payload_report()
@@ -719,6 +824,7 @@ class MalScraper:
  - Type {Colors.CYAN}TUTORIAL{Colors.NORMAL} to view this tutorial again.
  - Type {Colors.CYAN}UPDATE{Colors.NORMAL} to check for updates.
  - Type {Colors.CYAN}QUIT{Colors.NORMAL} to exit the application.
+{f"- Press {Colors.CYAN}TAB{Colors.NORMAL} to auto-complete commands!" if HAS_READLINE else ""}
 
 {Colors.BOLD}TIP:{Colors.NORMAL} For more information, visit the GitHub page or use the help menu.
 """
@@ -845,7 +951,10 @@ class MalScraper:
         # Main application loop
         while True:
             try:
-                command = input("malScraper> ")
+                if HAS_PROMPT_TOOLKIT:
+                    command = prompt("malScraper> ", completer=self.completer.prompt_completer)
+                else:
+                    command = input("malScraper> ")
                 self.process_command(command)
             except EOFError:  # Handle Ctrl+D
                 self._handle_exit()

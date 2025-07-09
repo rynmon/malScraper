@@ -9,3 +9,5 @@ requests
 pyfiglet 
 colorama
 datetime
+prompt_toolkit
+pyreadline; sys_platform == "win32"

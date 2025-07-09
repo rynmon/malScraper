@@ -18,25 +18,6 @@ from pathlib import Path
 import time
 import importlib.util
 
-# Try to import prompt_toolkit for robust tab completion (works everywhere)
-try:
-    from prompt_toolkit import prompt
-    from prompt_toolkit.completion import WordCompleter
-    HAS_PROMPT_TOOLKIT = True
-except ImportError:
-    HAS_PROMPT_TOOLKIT = False
-
-# Fallback to readline for tab completion (not available on Windows by default)
-try:
-    import readline
-    HAS_READLINE = True
-    # Set up readline globally for all input() calls
-    readline.parse_and_bind("tab: complete")
-    readline.parse_and_bind("set completion-ignore-case on")
-    readline.parse_and_bind("set show-all-if-ambiguous on")
-except ImportError:
-    HAS_READLINE = False
-
 # Colors for terminal output (works on Windows, Mac, Linux)
 class Colors:
     RED = '\033[0;31m'
@@ -46,6 +27,30 @@ class Colors:
     CYAN = '\033[1;36m'
     BOLD = '\033[1m'
     NORMAL = '\033[0m'
+
+# --- Dependency check and auto-install (runs once at the very top) ---
+required = {"requests", "pyfiglet", "prompt_toolkit"}
+missing = [pkg for pkg in required if importlib.util.find_spec(pkg) is None]
+
+if missing:
+    print(f"{Colors.YELLOW}{Colors.BOLD}Missing required packages: {', '.join(missing)}{Colors.NORMAL}")
+    while True:
+        choice = input(f"{Colors.PURPLE}Would you like to install them now? (Y/N): {Colors.NORMAL}").strip().lower()
+        if choice in ("y", "yes"):
+            subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
+            print(f"{Colors.GREEN}Please restart the application.{Colors.NORMAL}")
+            sys.exit(1)
+        elif choice in ("n", "no"):
+            print(f"{Colors.RED}Cannot continue without required packages. Exiting.{Colors.NORMAL}")
+            sys.exit(1)
+        else:
+            print(f"{Colors.RED}Invalid input. Please enter Y or N.{Colors.NORMAL}")
+
+# Third-party imports (guaranteed present after above check)
+from prompt_toolkit import prompt
+from prompt_toolkit.completion import WordCompleter
+import requests
+import pyfiglet
 
 # Command completer class for tab completion
 class CommandCompleter:
@@ -78,8 +83,7 @@ class CommandCompleter:
             self.all_commands.extend(cmd_list)
         
         # Create prompt_toolkit completer if available
-        if HAS_PROMPT_TOOLKIT:
-            self.prompt_completer = WordCompleter(self.all_commands, ignore_case=True)
+        self.prompt_completer = WordCompleter(self.all_commands, ignore_case=True)
     
     def complete(self, text, state):
         """Complete function for readline (fallback)"""
@@ -94,23 +98,6 @@ class CommandCompleter:
             return self.matches[state]
         except IndexError:
             return None
-
-required = {"requests", "pyfiglet"}
-missing = [pkg for pkg in required if importlib.util.find_spec(pkg) is None]
-
-if missing:
-    print(f"{Colors.YELLOW}{Colors.BOLD}Missing required packages: {', '.join(missing)}{Colors.NORMAL}")
-    while True:
-        choice = input("Would you like to install them now? (Y/N): ").strip().lower()
-        if choice in ("y", "yes"):
-            subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
-            print("Please restart the application.")
-            sys.exit(1)
-        elif choice in ("n", "no"):
-            print("Cannot continue without required packages. Exiting.")
-            sys.exit(1)
-        else:
-            print(f"{Colors.RED}Invalid input. Please enter Y or N.{Colors.NORMAL}")
 
 # --- Atomic update check (before any other logic) ---
 UPDATE_FLAG = Path(__file__).parent / "update_pending.json"
@@ -140,22 +127,8 @@ if UPDATE_FLAG.exists():
         print(f"Continuing with current version.")
         UPDATE_FLAG.unlink()
 
-# Third-party imports
-try:
-    import requests
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
-    print("Warning: Requests library not found. Install with 'pip install requests'")
-
-try:
-    import pyfiglet
-    HAS_PYFIGLET = True
-except ImportError:
-    HAS_PYFIGLET = False
-
 # Current version - Update this manually when releasing a new version
-CURRENT_VERSION = "1.4.5"
+CURRENT_VERSION = "1.4.6"
 
 # Splash-text for loading screens
 SPLASH_TEXTS = [
@@ -204,17 +177,6 @@ class MalScraper:
         
         # Setup tab completion
         self.completer = CommandCompleter()
-        
-        if HAS_PROMPT_TOOLKIT:
-            # Use prompt_toolkit for robust tab completion
-            pass
-        elif HAS_READLINE:
-            # Fallback to readline
-            readline.set_completer(self.completer.complete)
-        elif platform.system() == "Windows":
-            # On Windows, suggest installing pyreadline for tab completion
-            print(f"{Colors.YELLOW}💡 Tip: Install 'pyreadline' for tab completion on Windows: pip install pyreadline{Colors.NORMAL}")
-            time.sleep(2)
     
     def _get_base_dir(self):
         """Determine the appropriate base directory for the platform"""
@@ -260,22 +222,10 @@ class MalScraper:
         self._clear_screen()
         width = self._get_terminal_width()
         
-        if HAS_PYFIGLET:
-            # Use pyfiglet with a nice font if available
-            banner = pyfiglet.figlet_format("malScraper", font="slant")
-            for line in banner.splitlines():
-                print(line[:width])
-        else:
-            # Fallback to a hand-crafted ASCII art
-            ascii_art = r"""
-  __  __   __ _    _       ___   ___  ____    __    ____  ____  ____ 
- |  \/  | / _` |  | |     / __| / __||  _ \  / _\  |  _ \|  __||  _ \
- | |\/| || (_| |  | |__  | (__ | (__ | |_) |/    \ | |_) )  _| | |_) )
- |_|  |_| \__,_|  |____| \___|  \___||____/ \_/\_/ |  __/|____||  __/
-                                                    |_|         |_|    
-            """
-            for line in ascii_art.splitlines():
-                print(line[:width])
+        # Use pyfiglet with a nice font if available
+        banner = pyfiglet.figlet_format("malScraper", font="slant")
+        for line in banner.splitlines():
+            print(line[:width])
         
         # Application info
         print(f"\t{Colors.PURPLE}Tool\t :: malScraper")
@@ -285,12 +235,7 @@ class MalScraper:
         print(f"\tGithub\t :: https://github.com/rynmon/malScraper")
         print(f"\tBranch\t :: Stable")
         print(f"\tVersion\t :: {CURRENT_VERSION} (Python-compatible)")
-        if HAS_PROMPT_TOOLKIT:
-            print(f"\t{Colors.CYAN}Tab Completion{Colors.NORMAL} :: {Colors.GREEN}Enabled (prompt_toolkit){Colors.NORMAL}")
-        elif HAS_READLINE:
-            print(f"\t{Colors.CYAN}Tab Completion{Colors.NORMAL} :: {Colors.GREEN}Enabled (readline){Colors.NORMAL}")
-        else:
-            print(f"\t{Colors.CYAN}Tab Completion{Colors.NORMAL} :: {Colors.YELLOW}Not Available{Colors.NORMAL}")
+        print(f"\t{Colors.CYAN}Tab Completion{Colors.NORMAL} :: {Colors.GREEN}Enabled (prompt_toolkit){Colors.NORMAL}")
         print(f"{Colors.NORMAL}\n")
     
     def _print_help(self):
@@ -305,8 +250,7 @@ class MalScraper:
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Install{Colors.NORMAL} the latest {Colors.CYAN}update{Colors.NORMAL}\t\t\t\t\t\t{Colors.YELLOW}INSTALL,UPDATE{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} Perform {Colors.CYAN}Full-Scan{Colors.NORMAL} (Note this may take some time)\t\t\t{Colors.YELLOW}FULL,FULL-SCAN,FSCAN{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} Perform {Colors.CYAN}Quick-Scan{Colors.NORMAL} (Most recent 100 Payload Domains)\t\t{Colors.YELLOW}QUICK,QUICK-SCAN,QSCAN{Colors.NORMAL}")
-        if HAS_PROMPT_TOOLKIT or HAS_READLINE:
-            print(f"\n{Colors.CYAN}💡 Tip:{Colors.NORMAL} Press {Colors.YELLOW}TAB{Colors.NORMAL} to auto-complete commands!")
+        print(f"\n{Colors.CYAN}💡 Tip:{Colors.NORMAL} Press {Colors.YELLOW}TAB{Colors.NORMAL} to auto-complete commands!")
         print()
 
     def _print_directory_list(self):
@@ -337,10 +281,6 @@ class MalScraper:
     
     def _download_file(self, url, output_path, description=None):
         """Download a file with progress indicator"""
-        if not HAS_REQUESTS:
-            print(f"{Colors.RED}Error: Requests library not installed. Cannot download files.{Colors.NORMAL}")
-            return False
-            
         try:
             if description:
                 print(f"Downloading {description}...")
@@ -430,11 +370,6 @@ class MalScraper:
     
     def _check_for_updates(self):
         """Check for updates by querying the GitHub API"""
-        if not HAS_REQUESTS:
-            print(f"{Colors.YELLOW}Cannot check for updates: Requests library not installed{Colors.NORMAL}")
-            time.sleep(1)
-            return False, None, None, None
-            
         try:
             print(f"{Colors.CYAN}Checking for updates...{Colors.NORMAL}")
             
@@ -951,10 +886,7 @@ class MalScraper:
         # Main application loop
         while True:
             try:
-                if HAS_PROMPT_TOOLKIT:
-                    command = prompt("malScraper> ", completer=self.completer.prompt_completer)
-                else:
-                    command = input("malScraper> ")
+                command = prompt("malScraper> ", completer=self.completer.prompt_completer)
                 self.process_command(command)
             except EOFError:  # Handle Ctrl+D
                 self._handle_exit()

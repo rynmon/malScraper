@@ -1,13 +1,3 @@
-os
-time
-sys
-random
-ctypes
-base64
-zlib
 requests
-pyfiglet 
-colorama
-datetime
+pyfiglet
 prompt_toolkit
-pyreadline; sys_platform == "win32"

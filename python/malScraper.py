@@ -242,7 +242,7 @@ class MalScraper:
         """Display the help menu"""
         print(f"{Colors.CYAN}HELP MENU{Colors.NORMAL} {Colors.BOLD}::{Colors.NORMAL} Available {Colors.YELLOW}options{Colors.NORMAL} shown below:\n")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Tutorial{Colors.NORMAL} of how to use this tool\t\t\t\t\t{Colors.YELLOW}TUTORIAL{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} Show this {Colors.CYAN}Help{Colors.NORMAL} Menu\t\t\t\t\t\t\t{Colors.YELLOW}HELP,GET-f  ,?,-?,/?,MENU{Colors.NORMAL}")
+        print(f"{Colors.BOLD}[*]{Colors.NORMAL} Show this {Colors.CYAN}Help{Colors.NORMAL} Menu\t\t\t\t\t\t\t{Colors.YELLOW}HELP,GET-HELP,?,-?,/?,MENU{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Clear{Colors.NORMAL} screen\t\t\t\t\t\t\t{Colors.YELLOW}CLEAR,CLEAR-HOST,CLS{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} Return to {Colors.CYAN}Home{Colors.NORMAL} Menu\t\t\t\t\t\t\t{Colors.YELLOW}HOME,BACK,CD ..{Colors.NORMAL}")
         print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Open{Colors.NORMAL} an existing report\t\t\t\t\t\t{Colors.YELLOW}OPEN,REOPEN{Colors.NORMAL}")
@@ -759,9 +759,7 @@ class MalScraper:
  - Type {Colors.CYAN}TUTORIAL{Colors.NORMAL} to view this tutorial again.
  - Type {Colors.CYAN}UPDATE{Colors.NORMAL} to check for updates.
  - Type {Colors.CYAN}QUIT{Colors.NORMAL} to exit the application.
-{f"- Press {Colors.CYAN}TAB{Colors.NORMAL} to auto-complete commands!" if HAS_READLINE else ""}
 
-{Colors.BOLD}TIP:{Colors.NORMAL} For more information, visit the GitHub page or use the help menu.
 """
         self._clear_screen()
         print(tut_text)

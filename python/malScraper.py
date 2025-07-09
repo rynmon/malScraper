@@ -201,7 +201,7 @@ class MalScraper:
         print(f"\tAuthor\t :: Ryan Monaghan")
         print(f"\tBluesky\t :: https://bsky.app/profile/rynmon.ie")
         print(f"\tWebsite\t :: https://rynmon.ie")
-        print(f"\tGithub\t :: https://github.com/Ryan-Monaghan/malScraper")
+        print(f"\tGithub\t :: https://github.com/rynmon/malScraper")
         print(f"\tBranch\t :: Stable")
         print(f"\tVersion\t :: {CURRENT_VERSION} (Python-compatible){Colors.NORMAL}\n")
     

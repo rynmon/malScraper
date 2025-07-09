@@ -103,13 +103,13 @@ Users of previous bash-based versions can simply download the new Python script 
 - Antivirus software may flag or quarantine reports containing known malware indicators (see [Antivirus Warning](#antivirus-warning))
 
 ## Version History
-- **1.4.5** - Tab Completion & Enhanced UX
+- **1.4.6** - Tab Completion & Enhanced UX
   - Added robust tab completion for all commands (press TAB to auto-complete)
   - Uses prompt_toolkit for reliable tab completion across all platforms
   - Works on macOS, Linux, and Windows without additional dependencies
   - Enhanced help menu with tab completion tips
   - Improved command discovery and user experience
-- **1.4.4** - Download Experience & Antivirus Handling
+- **1.4.5** - Download Experience & Antivirus Handling
   - Cleaned up download output: only the download name, progress bar, and a single success/failure line per file.
   - After each successful download, the full path of the file is displayed.
   - Payload report handling prints both .txt and .zip paths as appropriate.

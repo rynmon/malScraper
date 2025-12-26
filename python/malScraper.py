@@ -14,9 +14,20 @@ import subprocess
 import platform
 import signal
 import json
+import re
+import zipfile
+import shutil
 from pathlib import Path
+from typing import Optional, Dict, Tuple, List
 import time
 import importlib.util
+
+# Constants
+CHUNK_SIZE = 8192
+PROGRESS_BAR_WIDTH = 20
+REQUEST_TIMEOUT = 30
+UPDATE_CHECK_TIMEOUT = 10
+TOP_DOMAINS_COUNT = 100
 
 # Colors for terminal output (works on Windows, Mac, Linux)
 class Colors:
@@ -39,7 +50,7 @@ if missing:
         if choice in ("y", "yes"):
             subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
             print(f"{Colors.GREEN}Please restart the application.{Colors.NORMAL}")
-            sys.exit(1)
+            sys.exit(0)  # Exit with 0 for successful installation
         elif choice in ("n", "no"):
             print(f"{Colors.RED}Cannot continue without required packages. Exiting.{Colors.NORMAL}")
             sys.exit(1)
@@ -106,10 +117,9 @@ if UPDATE_FLAG.exists():
         with open(UPDATE_FLAG, "r") as f:
             update_info = json.load(f)
         new_script_path = Path(update_info["new_script_path"])
-        current_script = Path(os.path.abspath(sys.argv[0]))
+        current_script = Path(__file__).resolve()
         backup_path = current_script.with_suffix('.bak')
         # Backup current script
-        import shutil
         shutil.copy2(current_script, backup_path)
         # Replace with new script
         shutil.copy2(new_script_path, current_script)
@@ -128,7 +138,7 @@ if UPDATE_FLAG.exists():
         UPDATE_FLAG.unlink()
 
 # Current version - Update this manually when releasing a new version
-CURRENT_VERSION = "1.4.6"
+CURRENT_VERSION = "1.4.7"
 
 # Splash-text for loading screens
 SPLASH_TEXTS = [
@@ -214,8 +224,15 @@ class MalScraper:
             return 80  # Fallback width
     
     def _clear_screen(self):
-        """Clear the terminal screen"""
-        os.system('cls' if platform.system() == 'Windows' else 'clear')
+        """Clear the terminal screen using subprocess for security"""
+        try:
+            if platform.system() == 'Windows':
+                subprocess.run(['cls'], shell=True, check=False)
+            else:
+                subprocess.run(['clear'], check=False)
+        except Exception:
+            # Fallback: print newlines if subprocess fails
+            print('\n' * 50)
     
     def _print_banner(self):
         """Print the application banner"""
@@ -284,15 +301,15 @@ class MalScraper:
         try:
             if description:
                 print(f"Downloading {description}...")
-            response = requests.get(url, stream=True)
+            response = requests.get(url, stream=True, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()  # Raise exception for HTTP errors
             total_size = int(response.headers.get('content-length', 0))
             with open(output_path, 'wb') as f:
                 if total_size > 0:
                     # If we know the size, show a progress bar
                     downloaded = 0
-                    progress_chars = 20
-                    for chunk in response.iter_content(chunk_size=8192):
+                    progress_chars = PROGRESS_BAR_WIDTH
+                    for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
                         if chunk:
                             f.write(chunk)
                             downloaded += len(chunk)
@@ -306,7 +323,7 @@ class MalScraper:
                     # If we don't know the size, just show activity
                     spinner = ['|', '/', '-', '\\']
                     idx = 0
-                    for chunk in response.iter_content(chunk_size=8192):
+                    for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
                         if chunk:
                             f.write(chunk)
                             idx = (idx + 1) % len(spinner)
@@ -316,33 +333,35 @@ class MalScraper:
             return True
         except requests.exceptions.HTTPError as e:
             print(f"{Colors.RED}HTTP error: {e.response.status_code} {e.response.reason}{Colors.NORMAL}")
-            if output_path and os.path.exists(output_path):
-                os.remove(output_path)
+            self._cleanup_failed_download(output_path)
             return False
         except requests.exceptions.ConnectionError:
             print(f"{Colors.RED}Connection error: Could not connect to server.{Colors.NORMAL}")
-            if output_path and os.path.exists(output_path):
-                os.remove(output_path)
+            self._cleanup_failed_download(output_path)
             return False
         except requests.exceptions.Timeout:
             print(f"{Colors.RED}Timeout error: The request timed out.{Colors.NORMAL}")
-            if output_path and os.path.exists(output_path):
-                os.remove(output_path)
+            self._cleanup_failed_download(output_path)
             return False
         except Exception as e:
             print(f"{Colors.RED}Unexpected error during download: {e}{Colors.NORMAL}")
-            if output_path and os.path.exists(output_path):
-                os.remove(output_path)
+            self._cleanup_failed_download(output_path)
             return False
+    
+    def _cleanup_failed_download(self, output_path: Optional[Path]) -> None:
+        """Clean up a failed download by removing the partial file"""
+        if output_path and output_path.exists():
+            try:
+                output_path.unlink()
+            except Exception as e:
+                print(f"{Colors.YELLOW}Warning: Could not remove partial file {output_path}: {e}{Colors.NORMAL}")
     
     def _process_payload_report(self):
         """Process the payload report to create AMP report"""
         try:
             # Strip domains for easy blacklisting
-            import re
-            
-            with open(self.paths['payload_report'], 'r') as infile, \
-                 open(self.paths['amp_report'], 'w') as outfile:
+            with open(self.paths['payload_report'], 'r', encoding='utf-8') as infile, \
+                 open(self.paths['amp_report'], 'w', encoding='utf-8') as outfile:
                 
                 for line in infile:
                     # Find domains like "http://domain.com/"
@@ -354,11 +373,11 @@ class MalScraper:
                         outfile.write(f"{domain}\n")
             
             # Create Top 100 report
-            with open(self.paths['payload_report'], 'r') as infile, \
-                 open(self.paths['top_100'], 'w') as outfile:
+            with open(self.paths['payload_report'], 'r', encoding='utf-8') as infile, \
+                 open(self.paths['top_100'], 'w', encoding='utf-8') as outfile:
                 
                 for i, line in enumerate(infile):
-                    if i >= 100:
+                    if i >= TOP_DOMAINS_COUNT:
                         break
                     outfile.write(line)
                     
@@ -373,7 +392,7 @@ class MalScraper:
         try:
             print(f"{Colors.CYAN}Checking for updates...{Colors.NORMAL}")
             
-            response = requests.get(RELEASE_URL, timeout=10)
+            response = requests.get(RELEASE_URL, timeout=UPDATE_CHECK_TIMEOUT)
             response.raise_for_status()
             
             release_data = response.json()
@@ -481,9 +500,9 @@ class MalScraper:
     def _obfuscate_payload_report(self):
         """Obfuscate PayloadReport.txt by replacing http with hxxp"""
         try:
-            with open(self.paths['payload_report'], 'r') as infile:
+            with open(self.paths['payload_report'], 'r', encoding='utf-8') as infile:
                 lines = infile.readlines()
-            with open(self.paths['payload_report'], 'w') as outfile:
+            with open(self.paths['payload_report'], 'w', encoding='utf-8') as outfile:
                 for line in lines:
                     outfile.write(line.replace('http', 'hxxp'))
             print(f"{Colors.GREEN}PayloadReport.txt obfuscated (http -> hxxp).{Colors.NORMAL}")
@@ -492,7 +511,6 @@ class MalScraper:
 
     def _zip_payload_report(self):
         """Zip PayloadReport.txt as PayloadReport.zip"""
-        import zipfile
         try:
             zip_path = self.paths['payload_report'].with_suffix('.zip')
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -516,12 +534,19 @@ class MalScraper:
             else:
                 print(f"{Colors.RED}Invalid input. Please enter 1, 2, 3, or 4.{Colors.NORMAL}")
 
-    def _download_payload_feed_with_options(self, choice, return_line_count=False):
-        import requests
-        import time
+    def _download_payload_feed_with_options(self, choice: str, return_line_count: bool = False) -> Tuple[bool, Optional[int]]:
+        """Download payload feed with obfuscation/zip options
+        
+        Args:
+            choice: User's choice for handling the payload report ('1', '2', '3', or '4')
+            return_line_count: Whether to return the line count of the downloaded data
+            
+        Returns:
+            Tuple of (success: bool, line_count: Optional[int])
+        """
         print(f"{Colors.CYAN}Downloading Payload Domains feed...{Colors.NORMAL}")
         try:
-            response = requests.get(FEEDS["payload_feed"], timeout=30)
+            response = requests.get(FEEDS["payload_feed"], timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
             data = response.text
             line_count = len(data.splitlines())
@@ -541,7 +566,6 @@ class MalScraper:
                 f.write(data)
             print(f"{Colors.GREEN}PayloadReport.txt saved.{Colors.NORMAL}")
         if choice in {'3', '4'}:
-            import zipfile
             zip_path = self.paths['payload_report'].with_suffix('.zip')
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 zipf.writestr('PayloadReport.txt', data)
@@ -572,7 +596,6 @@ class MalScraper:
         
         status = {}
         payload_line_count = None
-        import time
         print(f"{Colors.BOLD}Starting downloads...{Colors.NORMAL}\n")
         # C2 servers report
         print(f"C2 servers report:")
@@ -764,12 +787,14 @@ class MalScraper:
         self._clear_screen()
         print(tut_text)
     
-    def install_update(self, version=None, download_url=None, release_data=None):
-        """Install the downloaded update (atomic, on next launch)"""
-        import zipfile
-        import shutil
-        import json
+    def install_update(self, version: Optional[str] = None, download_url: Optional[str] = None, release_data: Optional[Dict] = None):
+        """Install the downloaded update (atomic, on next launch)
         
+        Args:
+            version: Version string of the update
+            download_url: URL to download the update from
+            release_data: Release data from GitHub API
+        """
         # Only check for updates if not already provided
         if not (version and download_url and release_data):
             update_available, version, download_url, release_data = self._check_for_updates()
@@ -787,7 +812,7 @@ class MalScraper:
         
         try:
             # Get the current script path
-            current_script = Path(os.path.abspath(sys.argv[0]))
+            current_script = Path(__file__).resolve()
             script_name = current_script.name
             
             # Create a temporary directory for extraction

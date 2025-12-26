@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>leaky | rynmon.ie</title>
+    <link rel="stylesheet" href="css/styles.min.css">
+    <link rel="icon" href="favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" href="favicon//favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="favicon//favicon.svg" />
+    <link rel="shortcut icon" href="favicon//favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon//apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="alternate" type="application/rss+xml" title="Leaky Keywords RSS Feed" href="rss.xml" />
+    <style>
+        /* Inline styles to ensure navigation works */
+        .nav {
+            position: fixed !important;
+            top: 20px !important;
+            right: 30px !important;
+        }
+        
+        .keywords-container {
+            margin: 20px 0;
+        }
+        
+        /* Navigation icon styling */
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 6px;
+            vertical-align: text-bottom;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+            position: relative;
+            top: -3px;
+        }
+        
+        .minimal-link:hover .nav-icon {
+            opacity: 1;
+        }
+        
+        /* Folder animation for projects icon */
+        a[href="projects.html"] .nav-icon {
+            animation: folderOpen 4s ease-in-out infinite;
+        }
+        
+        a[href="projects.html"] .nav-icon .folder-content {
+            animation: folderContentOpen 4s ease-in-out infinite;
+            transform-origin: top;
+        }
+        
+        /* Home icon animations */
+        a[href="index.html"] .nav-icon {
+            animation: homePulse 4s ease-in-out infinite;
+            width: 24px !important;
+            height: 24px !important;
+        }
+        
+        a[href="index.html"] .nav-icon .door {
+            animation: doorPulse 4s ease-in-out infinite;
+        }
+        
+        a[href="index.html"] .nav-icon .smoke {
+            animation: smokeRise 3s ease-in-out infinite;
+        }
+        
+        @keyframes folderOpen {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg); 
+            }
+            25% { 
+                transform: scale(1.1) rotate(-2deg); 
+            }
+            50% { 
+                transform: scale(1.05) rotate(1deg); 
+            }
+            75% { 
+                transform: scale(1.08) rotate(-1deg); 
+            }
+        }
+        
+        @keyframes folderContentOpen {
+            0%, 100% { 
+                transform: scaleY(0.3);
+                opacity: 0.1;
+            }
+            25% { 
+                transform: scaleY(0.8);
+                opacity: 0.3;
+            }
+            50% { 
+                transform: scaleY(1);
+                opacity: 0.4;
+            }
+            75% { 
+                transform: scaleY(0.6);
+                opacity: 0.2;
+            }
+        }
+        
+        @keyframes homePulse {
+            0%, 100% { 
+                transform: scale(1); 
+            }
+            50% { 
+                transform: scale(1.05); 
+            }
+        }
+        
+        @keyframes doorPulse {
+            0%, 100% { 
+                opacity: 0.2;
+            }
+            50% { 
+                opacity: 0.4;
+            }
+        }
+        
+        @keyframes smokeRise {
+            0%, 100% { 
+                transform: translateY(0) scale(1);
+                opacity: 0.4;
+            }
+            50% { 
+                transform: translateY(-2) scale(1.2);
+                opacity: 0.1;
+            }
+        }
+        
+        /* Maintainer credit styling */
+        .maintainer-credit {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+        
+        .maintainer-credit .cat-container,
+        .maintainer-credit .pug-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+
+        
+        .maintainer-credit .cat-container svg,
+        .maintainer-credit .pug-container svg,
+        .maintainer-credit .heart-icon {
+            margin-bottom: 0;
+        }
+        
+        .maintainer-credit {
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .maintainer-credit:hover {
+            opacity: 1;
+        }
+        
+        .heart-icon {
+            width: 16px;
+            height: 16px;
+            animation: heartbeat 2s ease-in-out infinite;
+            margin-top: 18px;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        /* Cat name styling */
+        .cat-name {
+            font-size: 0.7em;
+            font-weight: 500;
+            color: var(--text-color);
+            opacity: 0;
+            text-align: center;
+            line-height: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .cat-container:hover .cat-name {
+            opacity: 0.8;
+        }
+        
+        /* Pug name styling */
+        .pug-name {
+            font-size: 0.7em;
+            font-weight: 500;
+            color: var(--text-color);
+            opacity: 0;
+            text-align: center;
+            line-height: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .pug-container:hover .pug-name {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="index.html" class="minimal-link">
+            <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Simple house outline -->
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                
+                <!-- Simple door -->
+                <rect class="door" x="9" y="12" width="6" height="10" fill="currentColor" opacity="0.2"/>
+                
+                <!-- Single smoke particle -->
+                <circle class="smoke" cx="17" cy="3" r="0.8" fill="currentColor" opacity="0.4"/>
+            </svg>
+            home
+        </a>
+        <a href="projects.html" class="minimal-link">
+            <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Folder tab -->
+                <path class="folder-tab" d="M4 7h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                <!-- Animated folder content -->
+                <rect class="folder-content" x="4" y="12" width="16" height="8" fill="currentColor" opacity="0.2"/>
+            </svg>
+            projects
+        </a>
+    </nav>
+    
+    <button class="theme-toggle" onclick="toggleTheme()">light</button>
+    
+    <div class="container">
+        <div class="content">
+            <h1 class="section-title">leaky keywords</h1>
+            <p>a collection of keywords monitored for potential leaks and security alerts.</p>
+            
+            <div class="keywords-container">
+                <!-- You will manually add keywords here -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/theme.min.js"></script>
+    
+    <div class="maintainer-credit">
+        <div class="cat-container">
+            <div class="cat-name">Nomu</div>
+            <svg class="cat-icon" width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:4px;">
+                <polygon points="7,18 12,4 15,17" fill="#7a8ca5"/>
+                <polygon points="8,17 11,6 14,16" fill="#9aa8b5"/>
+                <polygon points="25,18 20,4 17,17" fill="#7a8ca5"/>
+                <polygon points="24,17 21,6 18,16" fill="#9aa8b5"/>
+                <ellipse cx="16" cy="20" rx="10" ry="8" fill="#7a8ca5"/>
+                <ellipse cx="16" cy="22" rx="3" ry="1.2" fill="#5a6b7a"/>
+                <circle cx="13" cy="19" r="1.2" fill="#6ee16e"/>
+                <circle cx="19" cy="19" r="1.2" fill="#6ee16e"/>
+                <circle cx="13" cy="19" r="0.6" fill="#4a8a4a"/>
+                <circle cx="19" cy="19" r="0.6" fill="#4a8a4a"/>
+                <ellipse cx="16" cy="24" rx="1.2" ry="0.5" fill="#222"/>
+                <path d="M14.5 21.5 Q16 23 17.5 21.5" stroke="#222" stroke-width="0.7" fill="none"/>
+                <line x1="10" y1="22" x2="6.5" y2="21" stroke="#222" stroke-width="0.7"/>
+                <line x1="10.5" y1="23" x2="7" y2="24" stroke="#222" stroke-width="0.7"/>
+                <line x1="10.5" y1="21" x2="7.5" y2="19.5" stroke="#222" stroke-width="0.7"/>
+                <line x1="22" y1="22" x2="25.5" y2="21" stroke="#222" stroke-width="0.7"/>
+                <line x1="21.5" y1="23" x2="25" y2="24" stroke="#222" stroke-width="0.7"/>
+                <line x1="21.5" y1="21" x2="24.5" y2="19.5" stroke="#222" stroke-width="0.7"/>
+            </svg>
+        </div>
+        <svg class="heart-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#ff4444"/>
+        </svg>
+        <div class="pug-container">
+            <div class="pug-name">Derry</div>
+                          <svg class="pug-icon" width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
+                <!-- Simple floppy dog ears - behind head -->
+                <ellipse cx="7" cy="18" rx="2" ry="4" fill="#111"/>
+                <ellipse cx="25" cy="18" rx="2" ry="4" fill="#111"/>
+                <!-- Pug head - bigger to match cat scale -->
+                <ellipse cx="16" cy="20" rx="10" ry="9" fill="#222"/>
+                <!-- Big round eyes -->
+                <circle cx="12" cy="19" r="1.8" fill="#fff"/>
+                <circle cx="20" cy="19" r="1.8" fill="#fff"/>
+                <circle cx="12" cy="19" r="1" fill="#111"/>
+                <circle cx="20" cy="19" r="1" fill="#111"/>
+                <!-- Pug wrinkles -->
+                <path d="M10 16 Q16 15 22 16" stroke="#444" stroke-width="1" fill="none"/>
+                <path d="M11 17 Q16 16.5 21 17" stroke="#444" stroke-width="0.8" fill="none"/>
+                <path d="M12 18 Q16 17.5 20 18" stroke="#444" stroke-width="0.6" fill="none"/>
+                <!-- Short flat muzzle -->
+                <ellipse cx="16" cy="23" rx="2.5" ry="1.5" fill="#444"/>
+                <!-- Black nose -->
+                <ellipse cx="16" cy="22.5" rx="0.6" ry="0.4" fill="#111"/>
+                <!-- Small mouth -->
+                <path d="M15 24 Q16 24.5 17 24" stroke="#111" stroke-width="0.4" fill="none"/>
+            </svg>
+        </div>
+    </div>
+</body>
+</html>

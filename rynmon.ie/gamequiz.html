@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>game soundbyte quiz | rynmon.ie</title>
+    <link rel="stylesheet" href="css/styles.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><style>@media (prefers-color-scheme: light) { .icon-fill { fill: %23333; } .icon-stroke { stroke: %23333; } } @media (prefers-color-scheme: dark) { .icon-fill { fill: %23E0E0E0; } .icon-stroke { stroke: %23E0E0E0; } }</style></defs><circle cx='16' cy='16' r='14' class='icon-fill' opacity='0.1'/><g class='icon-stroke' stroke-width='2' stroke-linecap='round'><line x1='16' y1='6' x2='16' y2='26'/><line x1='6' y1='16' x2='26' y2='16'/><line x1='8' y1='8' x2='24' y2='24'/><line x1='24' y1='8' x2='8' y2='24'/></g><circle cx='16' cy='16' r='2' class='icon-fill' opacity='0.8'/></svg>" type="image/svg+xml">
+    <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><style>@media (prefers-color-scheme: light) { .icon-fill { fill: %23333; } .icon-stroke { stroke: %23333; } } @media (prefers-color-scheme: dark) { .icon-fill { fill: %23E0E0E0; } .icon-stroke { stroke: %23E0E0E0; } }</style></defs><circle cx='16' cy='16' r='14' class='icon-fill' opacity='0.1'/><g class='icon-stroke' stroke-width='2' stroke-linecap='round'><line x1='16' y1='6' x2='16' y2='26'/><line x1='6' y1='16' x2='26' y2='16'/><line x1='8' y1='8' x2='24' y2='24'/><line x1='24' y1='8' x2='8' y2='24'/></g><circle cx='16' cy='16' r='2' class='icon-fill' opacity='0.8'/></svg>" type="image/svg+xml">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <style>
+        /* Inline styles for the game */
+        .nav {
+            position: fixed !important;
+            top: 20px !important;
+            right: 30px !important;
+        }
+
+        .game-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .game-intro {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .game-intro p {
+            max-width: 800px;
+            margin: 15px auto;
+            line-height: 1.8;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .text-button {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 1.1em;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            text-transform: lowercase;
+        }
+
+        .text-button:hover {
+            opacity: 1;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .soundbyte-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .soundbyte-item {
+            background-color: #f4ece3;
+            border-radius: 4px;
+            padding: 0;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .soundbyte-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .soundbyte-item.submitted .sound-clickable {
+            opacity: 0.7;
+        }
+
+        .sound-clickable {
+            cursor: pointer;
+            background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.15);
+            padding: 25px 15px;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+        }
+
+        .sound-clickable:hover {
+            background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.25);
+        }
+
+        .sound-clickable:active {
+            transform: scale(0.98);
+        }
+
+        .sound-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .guess-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: none;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            transition: background-color 0.3s;
+        }
+
+        .guess-input:focus {
+            outline: none;
+            background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.05);
+        }
+
+        .guess-input:disabled {
+            opacity: 0.7;
+            background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+        }
+
+        .submitted-answer {
+            background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+        }
+
+        .feedback-icon {
+            display: none;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+        }
+
+        .feedback-icon.correct {
+            display: block;
+            color: #4CAF50;
+        }
+
+        .feedback-icon.incorrect {
+            display: block;
+            color: #F44336;
+        }
+
+        .input-wrapper {
+            position: relative;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .results-container {
+            background-color: #f4ece3;
+            border-radius: 4px;
+            padding: 30px;
+            margin-top: 40px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .results-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .score {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .answers-list {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            max-width: 600px;
+            margin: 30px auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .answer-item {
+            display: flex;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+        }
+
+        .answer-item:hover {
+            background-color: rgba(0,0,0,0.02);
+        }
+
+        .answer-item.correct {
+            color: #4CAF50;
+        }
+
+        .answer-item.incorrect {
+            color: #F44336;
+        }
+
+        .answer-item:last-child {
+            border-bottom: none;
+        }
+
+        .replay-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            opacity: 0.7;
+            cursor: pointer;
+            padding: 5px;
+            margin-right: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s;
+        }
+
+        .replay-btn:hover {
+            opacity: 1;
+        }
+
+        .emoji {
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .soundbyte-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            .sound-number {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Navigation icon styling */
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 6px;
+            vertical-align: text-bottom;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+            position: relative;
+            top: -3px;
+        }
+        
+        .minimal-link:hover .nav-icon {
+            opacity: 1;
+        }
+        
+        /* Folder animation for projects icon */
+        a[href="projects.html"] .nav-icon {
+            animation: folderOpen 4s ease-in-out infinite;
+        }
+        
+        a[href="projects.html"] .nav-icon .folder-content {
+            animation: folderContentOpen 4s ease-in-out infinite;
+            transform-origin: top;
+        }
+        
+        /* Home icon animations */
+        a[href="index.html"] .nav-icon {
+            animation: homePulse 4s ease-in-out infinite;
+            width: 24px !important;
+            height: 24px !important;
+        }
+        
+        a[href="index.html"] .nav-icon .door {
+            animation: doorPulse 4s ease-in-out infinite;
+        }
+        
+        a[href="index.html"] .nav-icon .smoke {
+            animation: smokeRise 3s ease-in-out infinite;
+        }
+        
+        @keyframes folderOpen {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg); 
+            }
+            25% { 
+                transform: scale(1.1) rotate(-2deg); 
+            }
+            50% { 
+                transform: scale(1.05) rotate(1deg); 
+            }
+            75% { 
+                transform: scale(1.08) rotate(-1deg); 
+            }
+        }
+        
+        @keyframes folderContentOpen {
+            0%, 100% { 
+                transform: scaleY(0.3);
+                opacity: 0.1;
+            }
+            25% { 
+                transform: scaleY(0.8);
+                opacity: 0.3;
+            }
+            50% { 
+                transform: scaleY(1);
+                opacity: 0.4;
+            }
+            75% { 
+                transform: scaleY(0.6);
+                opacity: 0.2;
+            }
+        }
+        
+        @keyframes homePulse {
+            0%, 100% { 
+                transform: scale(1); 
+            }
+            50% { 
+                transform: scale(1.05); 
+            }
+        }
+        
+        @keyframes doorPulse {
+            0%, 100% { 
+                opacity: 0.2;
+            }
+            50% { 
+                opacity: 0.4;
+            }
+        }
+        
+        @keyframes smokeRise {
+            0%, 100% { 
+                transform: translateY(0) scale(1);
+                opacity: 0.4;
+            }
+            50% { 
+                transform: translateY(-2) scale(1.2);
+                opacity: 0.1;
+            }
+        }
+        
+        /* Maintainer credit styling */
+        .maintainer-credit {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+        
+        .maintainer-credit:hover {
+            opacity: 1;
+        }
+        
+        .heart-icon {
+            width: 16px;
+            height: 16px;
+            animation: heartbeat 2s ease-in-out infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="index.html" class="minimal-link">
+            <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Simple house outline -->
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                
+                <!-- Simple door -->
+                <rect class="door" x="9" y="12" width="6" height="10" fill="currentColor" opacity="0.2"/>
+                
+                <!-- Single smoke particle -->
+                <circle class="smoke" cx="17" cy="3" r="0.8" fill="currentColor" opacity="0.4"/>
+            </svg>
+            home
+        </a>
+        <a href="projects.html" class="minimal-link">
+            <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Folder tab -->
+                <path class="folder-tab" d="M4 7h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                <!-- Animated folder content -->
+                <rect class="folder-content" x="4" y="12" width="16" height="8" fill="currentColor" opacity="0.2"/>
+            </svg>
+            projects
+        </a>
+    </nav>
+
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span class="theme-icon theme-icon-sun" style="display:none;" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="5" fill="currentColor"/>
+                <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <line x1="12" y1="2" x2="12" y2="4"/>
+                    <line x1="12" y1="20" x2="12" y2="22"/>
+                    <line x1="2" y1="12" x2="4" y2="12"/>
+                    <line x1="20" y1="12" x2="22" y2="12"/>
+                    <line x1="5.34" y1="5.34" x2="6.75" y2="6.75"/>
+                    <line x1="17.25" y1="17.25" x2="18.66" y2="18.66"/>
+                    <line x1="5.34" y1="18.66" x2="6.75" y2="17.25"/>
+                    <line x1="17.25" y1="6.75" x2="18.66" y2="5.34"/>
+                </g>
+            </svg>
+        </span>
+        <span class="theme-icon theme-icon-moon" style="display:none;" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/>
+            </svg>
+        </span>
+    </button>
+    <style>
+    .theme-toggle {
+        position: fixed !important;
+        top: 20px !important;
+        left: 30px !important;
+        z-index: 1000 !important;
+        background: none !important;
+        border: none !important;
+        cursor: pointer !important;
+        opacity: .6 !important;
+        transition: all .3s ease !important;
+        color: var(--text-color) !important;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+        font-size: 1.1em !important;
+        padding: 0.2em 0.4em !important;
+        margin: 0 !important;
+        text-transform: lowercase !important;
+        outline: none !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5em;
+        height: 2.5em;
+    }
+    .theme-toggle:hover {
+        opacity: 1 !important;
+        transform: translateY(-1px) !important;
+        text-shadow: 0 0 2px rgba(var(--text-color-rgb,51,51,51),0.2) !important;
+    }
+    .theme-toggle:active {
+        transform: translateY(0) !important;
+    }
+    .theme-icon {
+        width: 1.6em;
+        height: 1.6em;
+        display: inline-block;
+        color: var(--text-color);
+    }
+    </style>
+
+    <div class="container">
+        <div class="content game-container">
+            <div class="game-intro">
+                <h1 class="section-title">game soundbyte quiz</h1>
+                <p>test your gaming knowledge by identifying these 24 iconic sounds from video games.<br>click on a numbered tile to play the sound, then type the name of the game in the box below it.<br><span style="opacity: 0.7; font-size: 0.9em;">this quiz changes monthly. once you submit your answers, you cannot restart or retake the quiz.</span></p>
+
+                <div class="button-container">
+                    <button id="start-game" class="text-button">start quiz</button>
+                    <button id="check-answers" class="text-button" style="display: none;">check answers</button>
+                </div>
+            </div>
+
+            <div id="game-board" class="soundbyte-grid" style="display: none;">
+
+            </div>
+
+            <div id="results" class="results-container">
+                <h2 class="results-title">quiz results</h2>
+                <p>you scored:</p>
+                <div class="score"><span id="final-score">0</span>/24</div>
+                <div id="score-message"></div>
+
+                <h3 style="margin-top: 30px;">your answers:</h3>
+                <ul id="answers-list" class="answers-list">
+
+                </ul>
+
+                <div class="button-container" style="margin-top: 30px;">
+                    <a href="index.html" class="text-button">return home</a>
+                </div>
+
+
+                <div id="leaderboard-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/theme.min.js"></script>
+    
+    <div class="maintainer-credit">
+        <span>maintained by ryan monaghan</span>
+        <svg class="heart-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#ff4444"/>
+        </svg>
+    </div>
+    
+    <script>
+        // We'll fetch game data from the server to prevent easy inspection of answers
+        let soundbytes = [];
+        let currentAudio = null;
+        let score = 0;
+        let userAnswers = {};
+        let quizSubmitted = false;
+
+        // DOM elements
+        const gameBoard = document.getElementById('game-board');
+        const startButton = document.getElementById('start-game');
+        const checkAnswersButton = document.getElementById('check-answers');
+        const resultsContainer = document.getElementById('results');
+        const finalScoreElement = document.getElementById('final-score');
+        const scoreMessage = document.getElementById('score-message');
+        const answersList = document.getElementById('answers-list');
+
+        // Add audio feedback sounds
+        const correctSound = new Audio('sounds/correct.mp3'); // Optional: Add a sound for correct answers
+        const incorrectSound = new Audio('sounds/incorrect.mp3'); // Optional: Add a sound for incorrect answers
+        const completedSound = new Audio('sounds/completed.mp3'); // Optional: Add a sound for quiz completion
+
+        // Add browser history manipulation to prevent back button
+        function preventBackButtonNavigation() {
+            // Add a dummy state to the history
+            history.pushState(null, document.title, location.href);
+            
+            // When the user hits back, add another state to prevent going back
+            window.addEventListener('popstate', function() {
+                history.pushState(null, document.title, location.href);
+            });
+        }
+
+        // Function to check if a quiz has been completed in this session
+        function hasCompletedQuizSession() {
+            return sessionStorage.getItem('quizCompleted') === 'true';
+        }
+
+        // Function to mark quiz as completed
+        function markQuizAsCompleted() {
+            sessionStorage.setItem('quizCompleted', 'true');
+        }
+
+        // Function to calculate time remaining until the next month
+        function getTimeToNextMonth() {
+            const now = new Date();
+            
+            // Create a date for the first day of next month
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+            
+            // Calculate the difference in milliseconds
+            const diff = nextMonth - now;
+            
+            // Convert to days, hours, minutes, seconds
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            return { days, hours, minutes, seconds, total: diff };
+        }
+
+        // Function to create and update the countdown timer
+        function createCountdownTimer(container) {
+            // Create the countdown timer element
+            const countdownDiv = document.createElement('div');
+            countdownDiv.className = 'countdown-timer';
+            countdownDiv.style.textAlign = 'center';
+            countdownDiv.style.padding = '20px 0';
+            countdownDiv.style.marginTop = '30px';
+            countdownDiv.style.borderTop = '1px solid var(--border-color)';
+            
+            const countdownTitle = document.createElement('h3');
+            countdownTitle.textContent = 'next month\'s quiz in:';
+            countdownTitle.style.marginBottom = '15px';
+            countdownTitle.style.opacity = '0.8';
+            
+            const timerDisplay = document.createElement('div');
+            timerDisplay.className = 'timer-display';
+            timerDisplay.style.fontFamily = 'monospace';
+            timerDisplay.style.fontSize = '1.5rem';
+            timerDisplay.style.margin = '10px 0';
+            
+            countdownDiv.appendChild(countdownTitle);
+            countdownDiv.appendChild(timerDisplay);
+            
+            container.appendChild(countdownDiv);
+            
+            // Function to update the timer display
+            function updateCountdown() {
+                const time = getTimeToNextMonth();
+                
+                // Format time units to always have two digits
+                const days = String(time.days).padStart(2, '0');
+                const hours = String(time.hours).padStart(2, '0');
+                const minutes = String(time.minutes).padStart(2, '0');
+                const seconds = String(time.seconds).padStart(2, '0');
+                
+                timerDisplay.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+                
+                // If we've reached the next month, reload the page
+                if (time.total <= 0) {
+                    location.reload();
+                }
+            }
+            
+            // Update immediately
+            updateCountdown();
+            
+            // Then update every second
+            return setInterval(updateCountdown, 1000);
+        }
+
+        // Check if user has already attempted this month
+        async function hasAttemptedQuiz() {
+            try {
+                const response = await fetch('php/scores.php?action=check_attempt', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                return data.hasAttempted === true;
+            } catch (error) {
+                console.error('Error checking attempt status:', error);
+                return false; // If there's an error, we'll allow them to play to be safe
+            }
+        }
+
+        // Initialize game data by fetching from server
+        async function initGameData() {
+            try {
+                const response = await fetch('php/answers.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: 'action=metadata'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error('Error fetching game data:', data.error);
+                    return false;
+                }
+
+                soundbytes = data.sounds;
+                userAnswers = {};
+
+                return true;
+            } catch (error) {
+                console.error('Error initializing game data:', error);
+                return false;
+            }
+        }
+
+        // Initialize game
+        async function initGame() {
+            // Show loading indicator
+            startButton.textContent = 'loading...';
+            startButton.disabled = true;
+
+            // Check if the quiz has been completed in this session
+            if (hasCompletedQuizSession()) {
+                // Show message that the quiz has been completed
+                gameBoard.innerHTML = ''; // Clear game board
+                
+                const attemptMessage = document.createElement('div');
+                attemptMessage.className = 'attempt-message';
+                attemptMessage.style.textAlign = 'center';
+                attemptMessage.style.padding = '30px 20px';
+                attemptMessage.style.backgroundColor = 'var(--card-bg)';
+                attemptMessage.style.borderRadius = '4px';
+                attemptMessage.style.marginBottom = '30px';
+                
+                const messageTitle = document.createElement('h2');
+                messageTitle.textContent = 'you\'ve already completed this quiz';
+                messageTitle.style.marginBottom = '15px';
+                
+                const messageText = document.createElement('p');
+                messageText.textContent = 'using the back button to retry the quiz is not allowed. please refresh the page to start a new session.';
+                messageText.style.marginBottom = '20px';
+                messageText.style.opacity = '0.8';
+                
+                const refreshButton = document.createElement('button');
+                refreshButton.className = 'text-button';
+                refreshButton.textContent = 'refresh page';
+                refreshButton.style.opacity = '1';
+                refreshButton.addEventListener('click', () => {
+                    // Clear the session storage and reload the page
+                    sessionStorage.removeItem('quizCompleted');
+                    window.location.reload();
+                });
+                
+                attemptMessage.appendChild(messageTitle);
+                attemptMessage.appendChild(messageText);
+                attemptMessage.appendChild(refreshButton);
+                
+                // Add the message to the game board area
+                gameBoard.appendChild(attemptMessage);
+                gameBoard.style.display = 'block'; // Make sure it's visible
+                
+                // Hide the start button
+                startButton.style.display = 'none';
+                
+                return;
+            }
+
+            // Now check if the user has already attempted the quiz this month (server-side check)
+            const attempted = await hasAttemptedQuiz();
+            
+            if (attempted) {
+                // Instead of alert, show an in-page message
+                gameBoard.innerHTML = ''; // Clear game board
+                
+                const attemptMessage = document.createElement('div');
+                attemptMessage.className = 'attempt-message';
+                attemptMessage.style.textAlign = 'center';
+                attemptMessage.style.padding = '30px 20px';
+                attemptMessage.style.backgroundColor = 'var(--card-bg)';
+                attemptMessage.style.borderRadius = '4px';
+                attemptMessage.style.marginBottom = '30px';
+                
+                const messageTitle = document.createElement('h2');
+                messageTitle.textContent = 'you\'ve already played this month\'s quiz';
+                messageTitle.style.marginBottom = '15px';
+                
+                const messageText = document.createElement('p');
+                messageText.textContent = 'each user is limited to one attempt per month. check out the current leaderboard below.';
+                messageText.style.marginBottom = '20px';
+                messageText.style.opacity = '0.8';
+                
+                // Create countdown timer for next month
+                createCountdownTimer(attemptMessage);
+                
+                attemptMessage.appendChild(messageTitle);
+                attemptMessage.appendChild(messageText);
+                
+                // Add the message to the game board area
+                gameBoard.appendChild(attemptMessage);
+                gameBoard.style.display = 'block'; // Make sure it's visible
+                
+                // Hide the start button
+                startButton.style.display = 'none';
+                
+                // Display the leaderboard
+                const leaderboardContainer = document.getElementById('leaderboard-container');
+                leaderboardContainer.innerHTML = ''; // Clear any existing content
+                displayLeaderboard(leaderboardContainer, false);
+                
+                // Show the results container (which holds the leaderboard)
+                resultsContainer.style.display = 'block';
+                
+                // Hide the score section and only show the leaderboard
+                document.querySelector('.results-title').style.display = 'none';
+                document.querySelector('.score').style.display = 'none';
+                document.getElementById('score-message').style.display = 'none';
+                document.querySelector('h3[style="margin-top: 30px;"]').style.display = 'none';
+                document.getElementById('answers-list').style.display = 'none';
+                
+                return;
+            }
+
+            // Initialize game data
+            const success = await initGameData();
+
+            if (!success) {
+                // Replace alert with an in-page message
+                startButton.textContent = 'start quiz';
+                startButton.disabled = false;
+                
+                const errorMessage = document.createElement('div');
+                errorMessage.textContent = 'Unable to load game data. Please try again later.';
+                errorMessage.style.color = '#F44336';
+                errorMessage.style.padding = '10px';
+                errorMessage.style.textAlign = 'center';
+                errorMessage.style.marginBottom = '20px';
+                
+                // Insert the error message before the button container
+                const buttonContainer = document.querySelector('.button-container');
+                buttonContainer.parentNode.insertBefore(errorMessage, buttonContainer);
+                
+                return;
+            }
+
+            // Create soundbyte items
+            gameBoard.innerHTML = '';
+
+            soundbytes.forEach(sound => {
+                const soundItem = document.createElement('div');
+                soundItem.className = 'soundbyte-item';
+                soundItem.dataset.id = sound.id;
+
+                const soundClickable = document.createElement('div');
+                soundClickable.className = 'sound-clickable';
+                soundClickable.addEventListener('click', () => {
+                    playSound(sound.id);
+                });
+
+                const soundNumber = document.createElement('div');
+                soundNumber.className = 'sound-number';
+                soundNumber.textContent = sound.id;
+
+                const inputField = document.createElement('input');
+                inputField.type = 'text';
+                inputField.className = 'guess-input';
+                inputField.id = `guess-${sound.id}`;
+                inputField.placeholder = 'Game title...';
+                inputField.autocomplete = 'off';
+
+                // Convert input to lowercase as user types
+                inputField.addEventListener('input', (e) => {
+                    // Ensure input is always lowercase
+                    const start = e.target.selectionStart;
+                    const end = e.target.selectionEnd;
+                    e.target.value = e.target.value.toLowerCase();
+                    // Preserve cursor position
+                    e.target.setSelectionRange(start, end);
+                });
+                // Prevent clicks on the input from triggering the parent's click event
+                inputField.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+
+                // Add input event listener to enable submitting with Enter
+                inputField.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        submitAnswer(sound.id);
+                    }
+                });
+
+                const feedbackIcon = document.createElement('div');
+                feedbackIcon.className = 'feedback-icon';
+                feedbackIcon.id = `feedback-${sound.id}`;
+                feedbackIcon.innerHTML = '✓'; // Will be shown/hidden with CSS
+
+                // Create a wrapper div for the input and feedback icon
+                const inputWrapper = document.createElement('div');
+                inputWrapper.className = 'input-wrapper';
+                inputWrapper.appendChild(inputField);
+                inputWrapper.appendChild(feedbackIcon);
+
+                soundClickable.appendChild(soundNumber);
+
+                soundItem.appendChild(soundClickable);
+                soundItem.appendChild(inputWrapper);
+
+                gameBoard.appendChild(soundItem);
+            });
+
+            // Reset game state
+            score = 0;
+            userAnswers = {};
+            quizSubmitted = false;
+
+            // Update button states
+            startButton.style.display = 'none';
+            checkAnswersButton.style.display = 'inline-block';
+            gameBoard.style.display = 'grid';
+        }
+
+        // Play sound
+        function playSound(soundId) {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+
+            const sound = soundbytes.find(s => s.id === soundId);
+            if (sound) {
+                currentAudio = new Audio(sound.file);
+                currentAudio.play().catch(error => {
+                    console.error('Error playing sound:', error);
+                    alert('Unable to play sound. Please check if the sound file exists.');
+                });
+            }
+        }
+
+        // Submit an individual answer
+        async function submitAnswer(soundId) {
+            if (quizSubmitted) return false;
+
+            const inputField = document.getElementById(`guess-${soundId}`);
+            const answer = inputField.value.trim();
+
+            if (answer) {
+                // Convert answer to lowercase before saving
+                const lowercaseAnswer = answer.toLowerCase();
+
+                // Save the answer
+                userAnswers[soundId] = lowercaseAnswer;
+
+                // Update input field to show lowercase version
+                inputField.value = lowercaseAnswer;
+
+                // Mark the input as submitted
+                inputField.disabled = true;
+                inputField.classList.add('submitted-answer');
+
+                // Mark the parent sound item as submitted
+                const soundItem = document.querySelector(`.soundbyte-item[data-id="${soundId}"]`);
+                soundItem.classList.add('submitted');
+
+                // Check if all answers are submitted
+                const allSubmitted = soundbytes.every(sound => userAnswers[sound.id]);
+                if (allSubmitted) {
+                    // Optionally auto-check answers when all are submitted
+                    // Uncomment the next line if you want auto-checking
+                    // checkAllAnswers();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        // Check all answers
+        async function checkAllAnswers() {
+            if (quizSubmitted) return;
+
+            // First check if they've already completed the quiz in this session
+            if (hasCompletedQuizSession()) {
+                alert('You have already completed this quiz. Please refresh the page to start a new session.');
+                return;
+            }
+
+            // Mark quiz as submitted to prevent multiple submissions
+            quizSubmitted = true;
+            
+            // Mark as completed in session storage
+            markQuizAsCompleted();
+
+            // Disable check answers button during processing
+            checkAnswersButton.disabled = true;
+            checkAnswersButton.textContent = 'checking...';
+
+            try {
+                // Collect any remaining answers and lock all inputs
+                soundbytes.forEach(sound => {
+                    const inputField = document.getElementById(`guess-${sound.id}`);
+
+                    // If not already submitted, get the current value
+                    if (!inputField.disabled) {
+                        // Convert to lowercase before saving
+                        const lowercaseAnswer = inputField.value.trim().toLowerCase();
+                        userAnswers[sound.id] = lowercaseAnswer;
+
+                        // Update input field to show lowercase version
+                        inputField.value = lowercaseAnswer;
+                        inputField.disabled = true;
+                        inputField.classList.add('submitted-answer');
+
+                        // Mark the parent sound item as submitted
+                        const soundItem = document.querySelector(`.soundbyte-item[data-id="${sound.id}"]`);
+                        if (soundItem) {
+                            soundItem.classList.add('submitted');
+                        }
+                    }
+                });
+
+                // Send all answers to server for verification
+                const response = await fetch('php/answers.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        action: 'results',
+                        guesses: userAnswers
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error('Error checking answers:', data.error);
+                    return;
+                }
+
+                // Update score
+                score = data.score;
+
+                // Display feedback for each answer
+                Object.keys(data.results).forEach(id => {
+                    const soundId = parseInt(id);
+                    const result = data.results[id];
+                    const feedbackIcon = document.getElementById(`feedback-${soundId}`);
+
+                    if (feedbackIcon) {
+                        if (result.correct) {
+                            feedbackIcon.textContent = '✓';
+                            feedbackIcon.className = 'feedback-icon correct';
+                        } else {
+                            feedbackIcon.textContent = '✗';
+                            feedbackIcon.className = 'feedback-icon incorrect';
+                        }
+                    }
+                });
+
+                // After showing results, disable the check answers button to prevent resubmitting
+                checkAnswersButton.disabled = true;
+                checkAnswersButton.style.opacity = 0.3;
+
+                // Play completion sound
+                try {
+                    completedSound.play();
+                } catch (error) {
+                    console.log('Audio feedback not available');
+                }
+
+                // Show results
+                showResults(data.results);
+
+            } catch (error) {
+                console.error('Error checking answers:', error);
+                alert('There was a problem checking your answers. Please try again.');
+
+                // Re-enable the button if there was an error
+                checkAnswersButton.disabled = false;
+                checkAnswersButton.textContent = 'check answers';
+                quizSubmitted = false;
+            }
+        }
+
+        // Show results
+        function showResults(results) {
+            gameBoard.style.display = 'none';
+            resultsContainer.style.display = 'block';
+            finalScoreElement.textContent = score;
+
+            // Generate score message
+            let message = '';
+            if (score >= 20) {
+                message = 'amazing! you\'re a true gaming expert!';
+            } else if (score >= 16) {
+                message = 'great job! you really know your games!';
+            } else if (score >= 12) {
+                message = 'good work! you\'ve got solid gaming knowledge.';
+            } else if (score >= 8) {
+                message = 'not bad! you know some classics.';
+            } else if (score >= 4) {
+                message = 'keep playing more games to improve your score!';
+            } else {
+                message = 'time to play more video games!';
+            }
+
+            scoreMessage.textContent = message;
+
+            // Show results
+            answersList.innerHTML = '';
+            soundbytes.forEach(sound => {
+                const userAnswer = userAnswers[sound.id] || '';
+                const result = results[sound.id];
+
+                if (!result) return; // Skip if no result for this id
+
+                const correctAnswer = result.answer;
+                const isAnswerCorrect = result.correct;
+
+                const answerItem = document.createElement('li');
+                answerItem.className = `answer-item ${isAnswerCorrect ? 'correct' : 'incorrect'}`;
+
+                const questionNumber = document.createElement('span');
+                questionNumber.textContent = `${sound.id}. `;
+
+                const answerContent = document.createElement('div');
+                answerContent.style.display = 'flex';
+                answerContent.style.justifyContent = 'space-between';
+                answerContent.style.width = '100%';
+
+                const answerText = document.createElement('span');
+                if (!userAnswer) {
+                    answerText.innerHTML = `<strong>No answer</strong>`;
+                } else if (isAnswerCorrect) {
+                    answerText.innerHTML = `<strong>${userAnswer}</strong> <span class="emoji">✓</span>`;
+                } else {
+                    answerText.innerHTML = `<strong>${userAnswer}</strong> <span class="emoji">✗</span>`;
+                }
+
+                const correctText = document.createElement('span');
+                if (!isAnswerCorrect) {
+                    correctText.innerHTML = `<em>${correctAnswer}</em>`;
+                }
+
+                answerContent.appendChild(answerText);
+                answerContent.appendChild(correctText);
+
+                answerItem.appendChild(questionNumber);
+                answerItem.appendChild(answerContent);
+                answersList.appendChild(answerItem);
+
+                // Add replay button to results
+                const replayButton = document.createElement('button');
+                replayButton.className = 'replay-btn';
+                replayButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+                replayButton.title = 'Replay sound';
+                replayButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    playSound(sound.id);
+                });
+
+                answerItem.insertBefore(replayButton, answerItem.firstChild);
+            });
+
+            // Add the leaderboard
+            const leaderboardContainer = document.getElementById('leaderboard-container');
+            displayLeaderboard(leaderboardContainer);
+        }
+
+        // Get scores from server
+        async function getMonthlyScores() {
+            try {
+                const response = await fetch('php/scores.php', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                
+                // Return the scores array from the response
+                return data.scores || [];
+            } catch (error) {
+                console.error('Error fetching scores:', error);
+                return [];
+            }
+        }
+
+        // Display leaderboard
+        async function displayLeaderboard(container, showSubmissionForm = true) {
+            try {
+                const scores = await getMonthlyScores();
+                const date = new Date();
+                const currentMonth = `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+
+                const leaderboardSection = document.createElement('div');
+                leaderboardSection.className = 'leaderboard-section';
+
+                // Add title
+                const leaderboardTitle = document.createElement('h3');
+                leaderboardTitle.textContent = `leaderboard: ${currentMonth}`;
+                leaderboardTitle.style.marginTop = '30px';
+                leaderboardTitle.style.marginBottom = '15px';
+                leaderboardSection.appendChild(leaderboardTitle);
+
+                // If we need to show the submission form
+                if (showSubmissionForm) {
+                    const scoreForm = document.createElement('div');
+                    scoreForm.className = 'score-submission';
+                    scoreForm.innerHTML = `
+                        <p style="margin-bottom: 10px;">add your score to the leaderboard:</p>
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                            <input type="text" id="player-name" placeholder="your name"
+                                style="padding: 8px; border: 1px solid var(--border-color); background-color: var(--bg-color);
+                                        color: var(--text-color); border-radius: 4px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;">
+                            <button id="submit-score" class="text-button" style="opacity: 1;">submit</button>
+                        </div>
+                    `;
+                    leaderboardSection.appendChild(scoreForm);
+                }
+
+                // Create the scores list
+                const scoresList = document.createElement('div');
+                scoresList.className = 'scores-list';
+                scoresList.style.maxHeight = '300px';
+                scoresList.style.overflowY = 'auto';
+                scoresList.style.border = '1px solid var(--border-color)';
+                scoresList.style.borderRadius = '4px';
+                scoresList.style.padding = '5px 0';
+
+                // Add scores or a message if none
+                if (scores.length === 0) {
+                    const noScores = document.createElement('p');
+                    noScores.textContent = 'no scores yet! be the first to submit.';
+                    noScores.style.padding = '10px 15px';
+                    noScores.style.opacity = '0.7';
+                    noScores.style.textAlign = 'center';
+                    scoresList.appendChild(noScores);
+                } else {
+                    // Add each score to the list
+                    scores.forEach((score, index) => {
+                        const scoreItem = document.createElement('div');
+                        scoreItem.className = 'score-item';
+                        scoreItem.style.display = 'flex';
+                        scoreItem.style.justifyContent = 'space-between';
+                        scoreItem.style.padding = '8px 15px';
+                        scoreItem.style.borderBottom = index < scores.length - 1 ? '1px solid var(--border-color)' : 'none';
+
+                        const ranking = document.createElement('span');
+                        ranking.textContent = `${index + 1}. ${score.name}`;
+
+                        const scoreValue = document.createElement('span');
+                        scoreValue.textContent = `${score.score}/24`;
+
+                        scoreItem.appendChild(ranking);
+                        scoreItem.appendChild(scoreValue);
+                        scoresList.appendChild(scoreItem);
+                    });
+                }
+
+                leaderboardSection.appendChild(scoresList);
+                container.appendChild(leaderboardSection);
+
+                // Add event listener for score submission if form exists
+                if (showSubmissionForm) {
+                    const submitButton = document.getElementById('submit-score');
+                    const playerNameInput = document.getElementById('player-name');
+
+                    submitButton.addEventListener('click', async () => {
+                        const playerName = playerNameInput.value.trim();
+                        
+                        // Basic check for empty input (can stay client-side for better UX)
+                        if (!playerName) {
+                            // Show error if name is empty
+                            playerNameInput.style.borderColor = '#F44336';
+                            
+                            // Create or update error message
+                            let errorMsg = container.querySelector('.name-error');
+                            if (!errorMsg) {
+                                errorMsg = document.createElement('p');
+                                errorMsg.className = 'name-error';
+                                errorMsg.style.color = '#F44336';
+                                errorMsg.style.fontSize = '0.9em';
+                                errorMsg.style.margin = '5px 0';
+                                
+                                // Insert after the input field
+                                const inputContainer = playerNameInput.parentElement;
+                                inputContainer.parentNode.insertBefore(errorMsg, inputContainer.nextSibling);
+                            }
+                            
+                            errorMsg.textContent = 'please enter a name';
+                            
+                            setTimeout(() => {
+                                playerNameInput.style.borderColor = '';
+                            }, 2000);
+                            
+                            return;
+                        }
+                        
+                        // Clear any existing error message
+                        const errorMsg = container.querySelector('.name-error');
+                        if (errorMsg) {
+                            errorMsg.remove();
+                        }
+                        
+                        // Save the score and wait for it to complete
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'submitting...';
+                        
+                        try {
+                            const response = await fetch('php/scores.php', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    name: playerName,
+                                    score: score
+                                })
+                            });
+
+                            const data = await response.json();
+                            
+                            // Handle server errors
+                            if (!response.ok || data.error) {
+                                throw new Error(data.error || 'Server error');
+                            }
+                            
+                            // If successful, update the leaderboard
+                            container.removeChild(leaderboardSection);
+                            displayLeaderboard(container, false);
+                            
+                            // Show confirmation message and countdown timer
+                            const confirmationDiv = document.createElement('div');
+                            confirmationDiv.style.marginTop = '20px';
+
+                            const confirmation = document.createElement('p');
+                            confirmation.textContent = 'score submitted! thanks for playing.';
+                            confirmation.style.opacity = '0.7';
+                            confirmationDiv.appendChild(confirmation);
+
+                            // Add countdown timer
+                            createCountdownTimer(confirmationDiv);
+
+                            container.appendChild(confirmationDiv);
+                        } catch (error) {
+                            console.error('Error submitting score:', error);
+                            
+                            // Show the error message from the server
+                            let errorMessage = error.message || 'Error submitting score. Please try again.';
+                            
+                            // Create or update server error message
+                            let serverErrorMsg = container.querySelector('.server-error');
+                            if (!serverErrorMsg) {
+                                serverErrorMsg = document.createElement('p');
+                                serverErrorMsg.className = 'server-error';
+                                serverErrorMsg.style.color = '#F44336';
+                                serverErrorMsg.style.margin = '10px 0';
+                                container.appendChild(serverErrorMsg);
+                            }
+                            
+                            serverErrorMsg.textContent = errorMessage;
+                            
+                            // Re-enable the submit button
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'submit';
+                            
+                            // Add visual feedback on the input field for profanity/validation errors
+                            if (error.message && (
+                                error.message.includes('appropriate language') || 
+                                error.message.includes('valid name') ||
+                                error.message.includes('too long')
+                            )) {
+                                playerNameInput.style.borderColor = '#F44336';
+                                setTimeout(() => {
+                                    playerNameInput.style.borderColor = '';
+                                }, 2000);
+                            }
+                        }
+                    });
+                }
+
+                return leaderboardSection;
+            } catch (error) {
+                console.error('Error displaying leaderboard:', error);
+                const errorSection = document.createElement('div');
+                errorSection.textContent = 'Unable to load leaderboard. Please try again later.';
+                errorSection.style.color = '#F44336';
+                container.appendChild(errorSection);
+                return errorSection;
+            }
+        }
+
+        // Add event listener to handle Enter key in input fields
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.classList.contains('guess-input')) {
+                const currentId = parseInt(e.target.id.split('-')[1]);
+
+                // Submit the current answer
+                submitAnswer(currentId);
+
+                // Move to next input
+                const nextId = currentId + 1;
+                if (nextId <= soundbytes.length) {
+                    const nextInput = document.getElementById(`guess-${nextId}`);
+                    if (nextInput && !nextInput.disabled) {
+                        nextInput.focus();
+                    }
+                }
+            }
+        });
+
+        // Call prevention for back button navigation when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevent back button navigation
+            preventBackButtonNavigation();
+        });
+
+        // Event listeners
+        startButton.addEventListener('click', initGame);
+        checkAnswersButton.addEventListener('click', checkAllAnswers);
+    </script>
+</body>
+</html>

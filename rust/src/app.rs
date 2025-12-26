@@ -595,10 +595,21 @@ impl MalScraper {
                     .check_for_updates(CURRENT_VERSION, true)
                     .await
                 {
-                    Ok(Some(_update_info)) => {
-                        Printer::info("Update available! Please download the latest release from:");
-                        Printer::info("https://github.com/rynmon/malScraper/releases");
-                        Printer::warning("Automatic update installation coming in a future release.");
+                    Ok(Some(update_info)) => {
+                        // Install the update
+                        match self.update_checker.install_update(update_info).await {
+                            Ok(()) => {
+                                Printer::info("\nUpdate installed! The application will now exit.");
+                                Printer::info("Please restart to use the new version.");
+                                std::thread::sleep(std::time::Duration::from_secs(2));
+                                std::process::exit(0);
+                            }
+                            Err(e) => {
+                                Printer::error(&format!("Failed to install update: {}", e));
+                                Printer::info("You can manually download from:");
+                                Printer::info("https://github.com/rynmon/malScraper/releases");
+                            }
+                        }
                     }
                     Ok(None) => {
                         Printer::success("You are running the latest version!");

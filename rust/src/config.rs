@@ -170,11 +170,12 @@ pub static DIRECTORY_LIST_ITEMS: Lazy<Vec<DirectoryItem>> = Lazy::new(|| {
     ]
 });
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UpdateInfo {
     pub new_script_path: String,
     pub temp_dir: String,
     pub backup_path: String,
     pub version: String,
+    pub download_url: String,
 }
 

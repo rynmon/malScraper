@@ -40,6 +40,126 @@ class Colors:
     BOLD = '\033[1m'
     NORMAL = '\033[0m'
 
+# Printer helper class for consistent printing with colors
+class Printer:
+    """Helper class for consistent printing with colors"""
+    
+    BULLET = f"{Colors.BOLD}[*]{Colors.NORMAL}"
+    
+    @staticmethod
+    def info(msg: str) -> None:
+        """Print info message"""
+        print(f"{Colors.CYAN}{msg}{Colors.NORMAL}")
+    
+    @staticmethod
+    def success(msg: str) -> None:
+        """Print success message"""
+        print(f"{Colors.GREEN}{msg}{Colors.NORMAL}")
+    
+    @staticmethod
+    def error(msg: str) -> None:
+        """Print error message"""
+        print(f"{Colors.RED}{msg}{Colors.NORMAL}")
+    
+    @staticmethod
+    def warning(msg: str) -> None:
+        """Print warning message"""
+        print(f"{Colors.YELLOW}{msg}{Colors.NORMAL}")
+    
+    @staticmethod
+    def menu_item(description: str, commands: str, highlight: Optional[str] = None) -> None:
+        """Print a formatted menu item
+        
+        Args:
+            description: Menu item description
+            commands: Available commands for this item
+            highlight: Optional text to highlight in description
+        """
+        if highlight and highlight in description:
+            # Replace highlight text with colored version
+            parts = description.split(highlight, 1)
+            if len(parts) == 2:
+                desc = f"{parts[0]}{Colors.CYAN}{highlight}{Colors.NORMAL}{parts[1]}"
+            else:
+                desc = description
+        else:
+            desc = description
+        
+        # Calculate padding for better alignment (simplified - works for most terminals)
+        desc_len = len(description)
+        padding = max(0, 50 - desc_len) if desc_len < 50 else 2
+        
+        print(f"{Printer.BULLET} {desc}{' ' * padding}{Colors.YELLOW}{commands}{Colors.NORMAL}")
+    
+    @staticmethod
+    def header(text: str, separator: str = " :: ") -> None:
+        """Print a header with optional separator
+        
+        Args:
+            text: Header text (may contain separator)
+            separator: Separator string to split on
+        """
+        if separator in text:
+            parts = text.split(separator, 1)
+            print(f"{Colors.CYAN}{parts[0]}{Colors.NORMAL} {Colors.BOLD}{separator}{Colors.NORMAL} {parts[1] if len(parts) > 1 else ''}")
+        else:
+            print(f"{Colors.CYAN}{Colors.BOLD}{text}{Colors.NORMAL}")
+    
+    @staticmethod
+    def label_value(label: str, value: str, label_color: str = Colors.PURPLE) -> None:
+        """Print a label: value pair (for banner)
+        
+        Args:
+            label: Label text
+            value: Value text
+            label_color: Color for the label
+        """
+        print(f"\t{label_color}{label}\t :: {value}{Colors.NORMAL}")
+    
+    @staticmethod
+    def directory_item(number: int, name: str, path: Path) -> None:
+        """Print a directory list item
+        
+        Args:
+            number: Item number
+            name: Item name
+            path: File path
+        """
+        print(f"{Colors.GREEN}{Colors.BOLD}{number}. {Colors.NORMAL}"
+              f"{Colors.RED}{Colors.BOLD}{name}:{Colors.NORMAL}{Colors.NORMAL} {path}")
+
+# Menu data structures
+HELP_MENU_ITEMS = [
+    {"description": "Tutorial of how to use this tool", "highlight": "Tutorial", "commands": "TUTORIAL"},
+    {"description": "Show this Help Menu", "highlight": "Help", "commands": "HELP,GET-HELP,?,-?,/?,MENU"},
+    {"description": "Clear screen", "highlight": "Clear", "commands": "CLEAR,CLEAR-HOST,CLS"},
+    {"description": "Return to Home Menu", "highlight": "Home", "commands": "HOME,BACK,CD .."},
+    {"description": "Open an existing report", "highlight": "Open", "commands": "OPEN,REOPEN"},
+    {"description": "Quit malScraper", "highlight": "Quit", "commands": "QUIT,EXIT"},
+    {"description": "Install the latest update", "highlight": "Install", "commands": "INSTALL,UPDATE"},
+    {"description": "Perform Full-Scan (Note this may take some time)", "highlight": "Full-Scan", "commands": "FULL,FULL-SCAN,FSCAN"},
+    {"description": "Perform Quick-Scan (Most recent 100 Payload Domains)", "highlight": "Quick-Scan", "commands": "QUICK,QUICK-SCAN,QSCAN"},
+]
+
+DIRECTORY_LIST_ITEMS = [
+    {"number": 1, "name": "Payload Domains", "path_key": "payload_report"},
+    {"number": 2, "name": "AMP Report", "path_key": "amp_report"},
+    {"number": 3, "name": "C2 Servers", "path_key": "c2_report"},
+    {"number": 4, "name": "Hex Report", "path_key": "hex_report"},
+    {"number": 5, "name": "URLHaus Maldownloads", "path_key": "haus_mal_down"},
+    {"number": 6, "name": "PhishTank Phishing Pages", "path_key": "phish_tank"},
+    {"number": 7, "name": "Most Recent 100", "path_key": "top_100"},
+]
+
+# Full scan download configuration
+FULL_SCAN_DOWNLOADS = [
+    {"name": "C2 servers report", "feed_key": "c2_feed", "path_key": "c2_report", 
+     "header": "#############################################\n# C2 Servers Report sourced from http://cybercrime-tracker.net/ \n#############################################\n"},
+    {"name": "Hex report", "feed_key": "hex_feed", "path_key": "hex_report"},
+    {"name": "URLHaus Malware downloads", "feed_key": "haus_mal_down", "path_key": "haus_mal_down"},
+    {"name": "PhishTank data", "feed_key": "phish_tank", "path_key": "phish_tank"},
+]
+
 # --- Dependency check and auto-install (runs once at the very top) ---
 required = {"requests", "pyfiglet", "prompt_toolkit", "packaging"}
 missing = [pkg for pkg in required if importlib.util.find_spec(pkg) is None]
@@ -293,43 +413,51 @@ class MalScraper:
         for line in banner.splitlines():
             print(line[:width])
         
-        # Application info
-        print(f"\t{Colors.PURPLE}Tool\t :: malScraper")
-        print(f"\tAuthor\t :: Ryan Monaghan")
-        print(f"\tBluesky\t :: https://bsky.app/profile/rynmon.ie")
-        print(f"\tWebsite\t :: https://rynmon.ie")
-        print(f"\tGithub\t :: https://github.com/rynmon/malScraper")
-        print(f"\tBranch\t :: Stable")
-        print(f"\tVersion\t :: {CURRENT_VERSION} (Python-compatible)")
+        # Application info using Printer helper
+        Printer.label_value("Tool", "malScraper")
+        Printer.label_value("Author", "Ryan Monaghan")
+        Printer.label_value("Bluesky", "https://bsky.app/profile/rynmon.ie")
+        Printer.label_value("Website", "https://rynmon.ie")
+        Printer.label_value("Github", "https://github.com/rynmon/malScraper")
+        Printer.label_value("Branch", "Stable")
+        Printer.label_value("Version", f"{CURRENT_VERSION} (Python-compatible)")
         print(f"\t{Colors.CYAN}Tab Completion{Colors.NORMAL} :: {Colors.GREEN}Enabled (prompt_toolkit){Colors.NORMAL}")
         print(f"{Colors.NORMAL}\n")
     
     def _print_help(self):
         """Display the help menu"""
-        print(f"{Colors.CYAN}HELP MENU{Colors.NORMAL} {Colors.BOLD}::{Colors.NORMAL} Available {Colors.YELLOW}options{Colors.NORMAL} shown below:\n")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Tutorial{Colors.NORMAL} of how to use this tool\t\t\t\t\t{Colors.YELLOW}TUTORIAL{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} Show this {Colors.CYAN}Help{Colors.NORMAL} Menu\t\t\t\t\t\t\t{Colors.YELLOW}HELP,GET-HELP,?,-?,/?,MENU{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Clear{Colors.NORMAL} screen\t\t\t\t\t\t\t{Colors.YELLOW}CLEAR,CLEAR-HOST,CLS{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} Return to {Colors.CYAN}Home{Colors.NORMAL} Menu\t\t\t\t\t\t\t{Colors.YELLOW}HOME,BACK,CD ..{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Open{Colors.NORMAL} an existing report\t\t\t\t\t\t{Colors.YELLOW}OPEN,REOPEN{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Quit{Colors.NORMAL} malScraper\t\t\t\t\t\t\t{Colors.YELLOW}QUIT,EXIT{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} {Colors.CYAN}Install{Colors.NORMAL} the latest {Colors.CYAN}update{Colors.NORMAL}\t\t\t\t\t\t{Colors.YELLOW}INSTALL,UPDATE{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} Perform {Colors.CYAN}Full-Scan{Colors.NORMAL} (Note this may take some time)\t\t\t{Colors.YELLOW}FULL,FULL-SCAN,FSCAN{Colors.NORMAL}")
-        print(f"{Colors.BOLD}[*]{Colors.NORMAL} Perform {Colors.CYAN}Quick-Scan{Colors.NORMAL} (Most recent 100 Payload Domains)\t\t{Colors.YELLOW}QUICK,QUICK-SCAN,QSCAN{Colors.NORMAL}")
+        Printer.header("HELP MENU :: Available options shown below:")
+        print()
+        
+        # Print menu items from data structure
+        for item in HELP_MENU_ITEMS:
+            Printer.menu_item(
+                item["description"],
+                item["commands"],
+                item.get("highlight")
+            )
+        
         print(f"\n{Colors.CYAN}💡 Tip:{Colors.NORMAL} Press {Colors.YELLOW}TAB{Colors.NORMAL} to auto-complete commands!")
         print()
+    
+    def _show_help_menu(self):
+        """Helper method to show help menu (for lambda in command_map)"""
+        self._clear_screen()
+        self._print_help()
 
     def _print_directory_list(self):
         """Display the directory paths where reports are stored"""
         self._clear_screen()
-        print(f"{Colors.GREEN}{Colors.BOLD}Success - Files written to:{Colors.NORMAL}{Colors.NORMAL}")
-        print(f"{Colors.GREEN}{Colors.BOLD}1. {Colors.NORMAL}{Colors.RED}{Colors.BOLD}Payload Domains:{Colors.NORMAL}{Colors.NORMAL} {self.paths['payload_report']}")
-        print(f"{Colors.GREEN}{Colors.BOLD}2. {Colors.NORMAL}{Colors.RED}{Colors.BOLD}AMP Report:{Colors.NORMAL}{Colors.NORMAL} {self.paths['amp_report']}")
-        print(f"{Colors.GREEN}{Colors.BOLD}3. {Colors.NORMAL}{Colors.RED}{Colors.BOLD}C2 Servers:{Colors.NORMAL}{Colors.NORMAL} {self.paths['c2_report']}")
-        print(f"{Colors.GREEN}{Colors.BOLD}4. {Colors.NORMAL}{Colors.RED}{Colors.BOLD}Hex Report:{Colors.NORMAL}{Colors.NORMAL} {self.paths['hex_report']}")
-        print(f"{Colors.GREEN}{Colors.BOLD}5. {Colors.NORMAL}{Colors.RED}{Colors.BOLD}URLHaus Maldownloads:{Colors.NORMAL}{Colors.NORMAL} {self.paths['haus_mal_down']}")
-        print(f"{Colors.GREEN}{Colors.BOLD}6. {Colors.NORMAL}{Colors.RED}{Colors.BOLD}PhishTank Phishing Pages:{Colors.NORMAL}{Colors.NORMAL} {self.paths['phish_tank']}")
-        print(f"{Colors.GREEN}{Colors.BOLD}7. {Colors.NORMAL}{Colors.RED}{Colors.BOLD}Most Recent 100:{Colors.NORMAL}{Colors.NORMAL} {self.paths['top_100']}\n")
+        Printer.success("Success - Files written to:")
+        
+        # Print directory items from data structure
+        for item in DIRECTORY_LIST_ITEMS:
+            Printer.directory_item(
+                item["number"],
+                item["name"],
+                self.paths[item["path_key"]]
+            )
+        print()
     
     def _open_file(self, file_path):
         """Open a file with the default application for the platform"""
@@ -342,14 +470,14 @@ class MalScraper:
                 subprocess.run(["xdg-open", str(file_path)], check=True)
             return True
         except Exception as e:
-            print(f"{Colors.RED}Error opening file: {e}{Colors.NORMAL}")
+            Printer.error(f"Error opening file: {e}")
             return False
     
     def _download_file(self, url, output_path, description=None):
         """Download a file with progress indicator"""
         try:
             if description:
-                print(f"Downloading {description}...")
+                Printer.info(f"Downloading {description}...")
             response = requests.get(url, stream=True, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()  # Raise exception for HTTP errors
             total_size = int(response.headers.get('content-length', 0))
@@ -381,19 +509,19 @@ class MalScraper:
                     sys.stdout.write("\n")  # Newline after spinner
             return True
         except requests.exceptions.HTTPError as e:
-            print(f"{Colors.RED}HTTP error: {e.response.status_code} {e.response.reason}{Colors.NORMAL}")
+            Printer.error(f"HTTP error: {e.response.status_code} {e.response.reason}")
             self._cleanup_failed_download(output_path)
             return False
         except requests.exceptions.ConnectionError:
-            print(f"{Colors.RED}Connection error: Could not connect to server.{Colors.NORMAL}")
+            Printer.error("Connection error: Could not connect to server.")
             self._cleanup_failed_download(output_path)
             return False
         except requests.exceptions.Timeout:
-            print(f"{Colors.RED}Timeout error: The request timed out.{Colors.NORMAL}")
+            Printer.error("Timeout error: The request timed out.")
             self._cleanup_failed_download(output_path)
             return False
         except Exception as e:
-            print(f"{Colors.RED}Unexpected error during download: {e}{Colors.NORMAL}")
+            Printer.error(f"Unexpected error during download: {e}")
             self._cleanup_failed_download(output_path)
             return False
     
@@ -403,7 +531,7 @@ class MalScraper:
             try:
                 output_path.unlink()
             except Exception as e:
-                print(f"{Colors.YELLOW}Warning: Could not remove partial file {output_path}: {e}{Colors.NORMAL}")
+                Printer.warning(f"Warning: Could not remove partial file {output_path}: {e}")
     
     def _calculate_checksum(self, file_path: Path) -> str:
         """Calculate SHA256 checksum of a file
@@ -421,7 +549,7 @@ class MalScraper:
                     sha256_hash.update(byte_block)
             return sha256_hash.hexdigest()
         except Exception as e:
-            print(f"{Colors.RED}Error calculating checksum: {e}{Colors.NORMAL}")
+            Printer.error(f"Error calculating checksum: {e}")
             return ""
     
     def _verify_checksum(self, file_path: Path, expected_checksum: Optional[str] = None) -> bool:
@@ -444,7 +572,7 @@ class MalScraper:
                 return False
             return calculated.lower() == expected_checksum.lower().strip()
         except Exception as e:
-            print(f"{Colors.RED}Error verifying checksum: {e}{Colors.NORMAL}")
+            Printer.error(f"Error verifying checksum: {e}")
             return False
     
     def _is_newer_version(self, current: str, latest: str) -> bool:
@@ -468,7 +596,7 @@ class MalScraper:
             
             return latest_parsed > current_parsed
         except Exception as e:
-            print(f"{Colors.YELLOW}Warning: Could not compare versions '{current}' and '{latest}': {e}{Colors.NORMAL}")
+            Printer.warning(f"Warning: Could not compare versions '{current}' and '{latest}': {e}")
             return False
     
     def _should_check_for_updates(self) -> bool:
@@ -520,15 +648,15 @@ class MalScraper:
             
             # Check that it has the expected structure
             if 'class MalScraper' not in content:
-                print(f"{Colors.RED}Updated script missing required class.{Colors.NORMAL}")
+                Printer.error("Updated script missing required class.")
                 return False
             
             return True
         except SyntaxError as e:
-            print(f"{Colors.RED}Updated script has syntax errors: {e}{Colors.NORMAL}")
+            Printer.error(f"Updated script has syntax errors: {e}")
             return False
         except Exception as e:
-            print(f"{Colors.RED}Error verifying update: {e}{Colors.NORMAL}")
+            Printer.error(f"Error verifying update: {e}")
             return False
     
     def _rollback_update(self, backup_path: Path, current_script: Path) -> bool:
@@ -543,16 +671,56 @@ class MalScraper:
         """
         try:
             if not backup_path.exists():
-                print(f"{Colors.RED}Backup not found, cannot rollback.{Colors.NORMAL}")
+                Printer.error("Backup not found, cannot rollback.")
                 return False
             
-            print(f"{Colors.YELLOW}Rolling back to previous version...{Colors.NORMAL}")
+            Printer.warning("Rolling back to previous version...")
             shutil.copy2(backup_path, current_script)
-            print(f"{Colors.GREEN}Rollback successful.{Colors.NORMAL}")
+            Printer.success("Rollback successful.")
             return True
         except Exception as e:
-            print(f"{Colors.RED}Rollback failed: {e}{Colors.NORMAL}")
+            Printer.error(f"Rollback failed: {e}")
             return False
+    
+    def _unpack_result(self, result):
+        """Helper to unpack result tuple consistently
+        
+        Args:
+            result: Either a tuple (success, line_count) or just success bool
+            
+        Returns:
+            Tuple of (success: bool, line_count: Optional[int])
+        """
+        if isinstance(result, tuple):
+            return result
+        return result, None
+    
+    def _download_with_status(self, name: str, feed_key: str, path_key: str, 
+                              header: Optional[str] = None) -> bool:
+        """Download a feed and update status
+        
+        Args:
+            name: Display name for the feed
+            feed_key: Key in FEEDS dictionary
+            path_key: Key in paths dictionary
+            header: Optional header to write to file
+            
+        Returns:
+            True if download succeeded, False otherwise
+        """
+        print(f"{name}:")
+        if header:
+            with open(self.paths[path_key], 'w', encoding='utf-8') as f:
+                f.write(header)
+        start = time.time()
+        success = self._download_file(FEEDS[feed_key], self.paths[path_key], name)
+        elapsed = time.time() - start
+        if success:
+            Printer.success(f"Success ({elapsed:.1f}s)")
+            Printer.success(f"{self.paths[path_key]} saved.\n")
+        else:
+            Printer.error("Failed\n")
+        return success
     
     def _process_payload_report(self):
         """Process the payload report to create AMP report"""
@@ -582,7 +750,7 @@ class MalScraper:
             return True
         
         except Exception as e:
-            print(f"{Colors.RED}Error processing payload report: {e}{Colors.NORMAL}")
+            Printer.error(f"Error processing payload report: {e}")
             return False
     
     def _check_for_updates(self, force: bool = False) -> Tuple[bool, Optional[str], Optional[str], Optional[Dict]]:
@@ -599,7 +767,7 @@ class MalScraper:
             return False, None, None, None
         
         try:
-            print(f"{Colors.CYAN}Checking for updates...{Colors.NORMAL}")
+            Printer.info("Checking for updates...")
             
             response = requests.get(RELEASE_URL, timeout=UPDATE_CHECK_TIMEOUT)
             response.raise_for_status()
@@ -609,15 +777,15 @@ class MalScraper:
             
             # Use packaging library for version comparison
             if not self._is_newer_version(CURRENT_VERSION, latest_version):
-                print(f"{Colors.GREEN}{Colors.BOLD}Running latest version: {CURRENT_VERSION}{Colors.NORMAL}")
+                Printer.success(f"Running latest version: {CURRENT_VERSION}")
                 self._update_check_timestamp()
                 time.sleep(1)
                 return False, None, None, None
             
             # Update available
             print(f"\n{Colors.YELLOW}{Colors.BOLD}New version available!{Colors.NORMAL}")
-            print(f"{Colors.CYAN}Current version:{Colors.NORMAL} {CURRENT_VERSION}")
-            print(f"{Colors.CYAN}Latest version:{Colors.NORMAL} {latest_version}")
+            Printer.info(f"Current version: {CURRENT_VERSION}")
+            Printer.info(f"Latest version: {latest_version}")
             
             # Get download URLs - prefer the asset if available, otherwise use zipball
             assets = release_data.get('assets', [])
@@ -659,12 +827,12 @@ class MalScraper:
             release_notes = release_data.get('body', 'No release notes available')
             
             # Display release notes
-            print(f"\n{Colors.CYAN}Release notes:{Colors.NORMAL}")
+            Printer.info("\nRelease notes:")
             notes_lines = release_notes.split('\n')
-            for i, line in enumerate(notes_lines[:5]):
+            for line in notes_lines[:5]:
                 print(f"  {line}")
             if len(notes_lines) > 5:
-                print(f"  {Colors.YELLOW}...and more{Colors.NORMAL}")
+                Printer.warning("  ...and more")
             
             # Prompt user
             while True:
@@ -681,14 +849,14 @@ class MalScraper:
                     time.sleep(1)
                     return False, None, None, None
                 else:
-                    print(f"{Colors.RED}Invalid input. Please enter Y or N.{Colors.NORMAL}")
+                    Printer.error("Invalid input. Please enter Y or N.")
                 
         except requests.exceptions.ConnectionError:
-            print(f"{Colors.YELLOW}Could not check for updates: No internet connection{Colors.NORMAL}")
+            Printer.warning("Could not check for updates: No internet connection")
         except requests.exceptions.Timeout:
-            print(f"{Colors.YELLOW}Update check timed out{Colors.NORMAL}")
+            Printer.warning("Update check timed out")
         except Exception as e:
-            print(f"{Colors.YELLOW}Error checking for updates: {e}{Colors.NORMAL}")
+            Printer.warning(f"Error checking for updates: {e}")
         
         time.sleep(1)
         return False, None, None, None
@@ -726,9 +894,9 @@ class MalScraper:
             with open(self.paths['payload_report'], 'w', encoding='utf-8') as outfile:
                 for line in lines:
                     outfile.write(line.replace('http', 'hxxp'))
-            print(f"{Colors.GREEN}PayloadReport.txt obfuscated (http -> hxxp).{Colors.NORMAL}")
+            Printer.success("PayloadReport.txt obfuscated (http -> hxxp).")
         except Exception as e:
-            print(f"{Colors.RED}Error obfuscating PayloadReport.txt: {e}{Colors.NORMAL}")
+            Printer.error(f"Error obfuscating PayloadReport.txt: {e}")
 
     def _zip_payload_report(self):
         """Zip PayloadReport.txt as PayloadReport.zip"""
@@ -736,9 +904,9 @@ class MalScraper:
             zip_path = self.paths['payload_report'].with_suffix('.zip')
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 zipf.write(self.paths['payload_report'], arcname='PayloadReport.txt')
-            print(f"{Colors.GREEN}PayloadReport.txt zipped as {zip_path}.{Colors.NORMAL}")
+            Printer.success(f"PayloadReport.txt zipped as {zip_path}.")
         except Exception as e:
-            print(f"{Colors.RED}Error zipping PayloadReport.txt: {e}{Colors.NORMAL}")
+            Printer.error(f"Error zipping PayloadReport.txt: {e}")
 
     def _get_payload_option(self):
         """Prompt user for PayloadReport.txt handling option and return choice."""
@@ -753,7 +921,7 @@ class MalScraper:
             if choice in {'1', '2', '3', '4'}:
                 return choice
             else:
-                print(f"{Colors.RED}Invalid input. Please enter 1, 2, 3, or 4.{Colors.NORMAL}")
+                Printer.error("Invalid input. Please enter 1, 2, 3, or 4.")
 
     def _download_payload_feed_with_options(self, choice: str, return_line_count: bool = False) -> Tuple[bool, Optional[int]]:
         """Download payload feed with obfuscation/zip options
@@ -765,16 +933,16 @@ class MalScraper:
         Returns:
             Tuple of (success: bool, line_count: Optional[int])
         """
-        print(f"{Colors.CYAN}Downloading Payload Domains feed...{Colors.NORMAL}")
+        Printer.info("Downloading Payload Domains feed...")
         try:
             response = requests.get(FEEDS["payload_feed"], timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
             data = response.text
             line_count = len(data.splitlines())
-            print(f"{Colors.GREEN}Download complete.{Colors.NORMAL}")
+            Printer.success("Download complete.")
             time.sleep(1.5)
         except Exception as e:
-            print(f"{Colors.RED}Failed to download payload report: {e}{Colors.NORMAL}")
+            Printer.error(f"Failed to download payload report: {e}")
             if return_line_count:
                 return False, None
             return False
@@ -785,12 +953,12 @@ class MalScraper:
         if choice in {'1', '2'}:
             with open(self.paths['payload_report'], 'w', encoding='utf-8') as f:
                 f.write(data)
-            print(f"{Colors.GREEN}PayloadReport.txt saved.{Colors.NORMAL}")
+            Printer.success("PayloadReport.txt saved.")
         if choice in {'3', '4'}:
             zip_path = self.paths['payload_report'].with_suffix('.zip')
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 zipf.writestr('PayloadReport.txt', data)
-            print(f"{Colors.GREEN}PayloadReport.txt zipped as {zip_path}.{Colors.NORMAL}")
+            Printer.success(f"PayloadReport.txt zipped as {zip_path}.")
         if return_line_count:
             return True, line_count
         return True
@@ -809,88 +977,42 @@ class MalScraper:
             if isinstance(path, Path) and path.is_file():
                 path.unlink()
         
-        # C2 report header
-        with open(self.paths['c2_report'], 'w') as f:
-            f.write("#############################################\n")
-            f.write("# C2 Servers Report sourced from http://cybercrime-tracker.net/ \n")
-            f.write("#############################################\n")
-        
         status = {}
         payload_line_count = None
         print(f"{Colors.BOLD}Starting downloads...{Colors.NORMAL}\n")
-        # C2 servers report
-        print(f"C2 servers report:")
-        start = time.time()
-        if self._download_file(FEEDS["c2_feed"], self.paths['c2_report'], "C2 servers report"):
-            elapsed = time.time() - start
-            print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
-            print(f"{Colors.GREEN}{self.paths['c2_report']} saved.{Colors.NORMAL}\n")
-            status["C2 servers report"] = True
-        else:
-            print(f"{Colors.RED}Failed{Colors.NORMAL}\n")
-            status["C2 servers report"] = False
-        # Hex report
-        print(f"Hex report:")
-        start = time.time()
-        if self._download_file(FEEDS["hex_feed"], self.paths['hex_report'], "Hex report"):
-            elapsed = time.time() - start
-            print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
-            print(f"{Colors.GREEN}{self.paths['hex_report']} saved.{Colors.NORMAL}\n")
-            status["Hex report"] = True
-        else:
-            print(f"{Colors.RED}Failed{Colors.NORMAL}\n")
-            status["Hex report"] = False
+        
+        # Download standard feeds using data structure
+        for download in FULL_SCAN_DOWNLOADS:
+            status[download["name"]] = self._download_with_status(
+                download["name"],
+                download["feed_key"],
+                download["path_key"],
+                download.get("header")
+            )
+        
         # Payload report (special handling)
         print(f"Payload domains:")
         start = time.time()
-        result = self._download_payload_feed_with_options(payload_option, return_line_count=True)
-        if isinstance(result, tuple):
-            payload_success, payload_line_count = result
-        else:
-            payload_success = result
-            payload_line_count = None
+        payload_success, payload_line_count = self._unpack_result(
+            self._download_payload_feed_with_options(payload_option, return_line_count=True)
+        )
         elapsed = time.time() - start
         if payload_success:
-            print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
-            # Print saved file(s) info for payload
+            Printer.success(f"Success ({elapsed:.1f}s)")
             if payload_option in {'1', '2'}:
-                print(f"{Colors.GREEN}{self.paths['payload_report']} saved.{Colors.NORMAL}")
+                Printer.success(f"{self.paths['payload_report']} saved.")
             if payload_option in {'3', '4'}:
                 zip_path = self.paths['payload_report'].with_suffix('.zip')
-                print(f"{Colors.GREEN}{zip_path} saved.{Colors.NORMAL}")
+                Printer.success(f"{zip_path} saved.")
             print()
             if self.paths['payload_report'].exists():
-                if not self._process_payload_report():
-                    status["Payload domains"] = False
-                else:
-                    status["Payload domains"] = True
+                status["Payload domains"] = self._process_payload_report()
             else:
                 status["Payload domains"] = True
         else:
-            print(f"{Colors.RED}Failed{Colors.NORMAL}\n")
+            Printer.error("Failed\n")
             status["Payload domains"] = False
-        # URLHaus Malware downloads
-        print(f"URLHaus Malware downloads:")
-        start = time.time()
-        if self._download_file(FEEDS["haus_mal_down"], self.paths['haus_mal_down'], "URLHaus Malware downloads"):
-            elapsed = time.time() - start
-            print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
-            print(f"{Colors.GREEN}{self.paths['haus_mal_down']} saved.{Colors.NORMAL}\n")
-            status["URLHaus Malware downloads"] = True
-        else:
-            print(f"{Colors.RED}Failed{Colors.NORMAL}\n")
-            status["URLHaus Malware downloads"] = False
-        # PhishTank data
-        print(f"PhishTank data:")
-        start = time.time()
-        if self._download_file(FEEDS["phish_tank"], self.paths['phish_tank'], "PhishTank data"):
-            elapsed = time.time() - start
-            print(f"{Colors.GREEN}Success{Colors.NORMAL} ({elapsed:.1f}s)")
-            print(f"{Colors.GREEN}{self.paths['phish_tank']} saved.{Colors.NORMAL}\n")
-            status["PhishTank data"] = True
-        else:
-            print(f"{Colors.RED}Failed{Colors.NORMAL}\n")
-            status["PhishTank data"] = False
+        
         time.sleep(1.5)
         # Print summary
         succeeded = [k for k, v in status.items() if v]
@@ -903,12 +1025,10 @@ class MalScraper:
             print(f"- {len(failed)} download(s) failed: {', '.join(failed)}.")
         print()
         if not all(status.values()):
-            print(f"{Colors.YELLOW}{Colors.BOLD}Warning: {Colors.NORMAL}Some downloads may have failed. Check the reports.{Colors.NORMAL}\n")
+            Printer.warning("Warning: Some downloads may have failed. Check the reports.\n")
         input("Press Enter to continue...")
-        # Clear screen and show directory listing
         self._clear_screen()
         self._print_directory_list()
-        # Return to home menu
         self.show_home()
 
     def quick_scan(self):
@@ -926,20 +1046,16 @@ class MalScraper:
                 path.unlink()
         
         # Download payload report with options (in-memory)
-        result = self._download_payload_feed_with_options(payload_option, return_line_count=True)
-        if isinstance(result, tuple):
-            payload_success, payload_line_count = result
-        else:
-            payload_success = result
-            payload_line_count = None
+        payload_success, _ = self._unpack_result(
+            self._download_payload_feed_with_options(payload_option, return_line_count=True)
+        )
         if payload_success:
             if self.paths['payload_report'].exists():
                 self._process_payload_report()
         else:
-            print(f"{Colors.RED}Failed to download payload report.{Colors.NORMAL}")
+            Printer.error("Failed to download payload report.")
             time.sleep(2)
         time.sleep(1.5)
-        # Return to home menu
         self.show_home()
     
     def _prompt_open_report(self, first_time=False):
@@ -953,22 +1069,16 @@ class MalScraper:
                 first = False
             option = input("Which feed would you like to open? ")
             print()
-            valid_options = {
-                "1": self.paths['payload_report'],
-                "2": self.paths['amp_report'],
-                "3": self.paths['c2_report'],
-                "4": self.paths['hex_report'],
-                "5": self.paths['haus_mal_down'],
-                "6": self.paths['phish_tank'],
-                "7": self.paths['top_100']
-            }
+            # Use DIRECTORY_LIST_ITEMS data structure
+            valid_options = {str(item["number"]): self.paths[item["path_key"]] 
+                           for item in DIRECTORY_LIST_ITEMS}
             if option in valid_options:
                 self._open_file(valid_options[option])
                 break
             elif option.lower() == "home":
                 break
             else:
-                print(f"{Colors.RED}{Colors.BOLD}Error: {Colors.NORMAL}Invalid Option.")
+                Printer.error("Invalid Option.")
                 input("Press Enter to try again...")
 
     def reopen(self):
@@ -1027,29 +1137,29 @@ class MalScraper:
         
         # Download the update
         update_file = self.paths['updates_dir'] / f"malScraper-{version}.zip"
-        print(f"{Colors.CYAN}Downloading update...{Colors.NORMAL}")
+        Printer.info("Downloading update...")
         
         if not self._download_file(download_url, update_file, f"malScraper version {version}"):
-            print(f"{Colors.RED}Update download failed.{Colors.NORMAL}")
+            Printer.error("Update download failed.")
             time.sleep(2)
             return
         
         # Verify checksum if available
         if expected_checksum:
-            print(f"{Colors.CYAN}Verifying download integrity...{Colors.NORMAL}")
+            Printer.info("Verifying download integrity...")
             if not self._verify_checksum(update_file, expected_checksum):
-                print(f"{Colors.RED}Checksum verification failed! Update may be corrupted.{Colors.NORMAL}")
-                print(f"{Colors.YELLOW}Expected: {expected_checksum}{Colors.NORMAL}")
-                print(f"{Colors.YELLOW}Got: {self._calculate_checksum(update_file)}{Colors.NORMAL}")
+                Printer.error("Checksum verification failed! Update may be corrupted.")
+                Printer.warning(f"Expected: {expected_checksum}")
+                Printer.warning(f"Got: {self._calculate_checksum(update_file)}")
                 try:
                     update_file.unlink()
                 except Exception:
                     pass
                 time.sleep(2)
                 return
-            print(f"{Colors.GREEN}Checksum verified.{Colors.NORMAL}")
+            Printer.success("Checksum verified.")
         
-        print(f"{Colors.CYAN}Preparing update...{Colors.NORMAL}")
+        Printer.info("Preparing update...")
         
         try:
             # Get the current script path
@@ -1058,7 +1168,7 @@ class MalScraper:
             backup_path = current_script.with_suffix('.bak')
             
             # Create backup BEFORE doing anything
-            print(f"{Colors.CYAN}Creating backup...{Colors.NORMAL}")
+            Printer.info("Creating backup...")
             shutil.copy2(current_script, backup_path)
             
             # Create a temporary directory for extraction
@@ -1068,26 +1178,26 @@ class MalScraper:
             temp_dir.mkdir(exist_ok=True)
             
             # Extract the update
-            print(f"{Colors.CYAN}Extracting update...{Colors.NORMAL}")
+            Printer.info("Extracting update...")
             with zipfile.ZipFile(update_file, 'r') as zip_ref:
                 zip_ref.extractall(temp_dir)
             
             # Find the updated script (it might be in a subdirectory after extraction)
-            new_script = None
-            for path in temp_dir.glob('**/*.py'):
-                if path.name == script_name or path.name == 'malScraper.py':
-                    new_script = path
-                    break
+            new_script = next(
+                (path for path in temp_dir.glob('**/*.py') 
+                 if path.name == script_name or path.name == 'malScraper.py'),
+                None
+            )
             
             if not new_script:
-                print(f"{Colors.RED}Could not find the updated script in the package.{Colors.NORMAL}")
+                Printer.error("Could not find the updated script in the package.")
                 time.sleep(2)
                 return
             
             # Verify the new script before installing
-            print(f"{Colors.CYAN}Verifying update...{Colors.NORMAL}")
+            Printer.info("Verifying update...")
             if not self._verify_update_success(new_script):
-                print(f"{Colors.RED}Update verification failed. Rolling back...{Colors.NORMAL}")
+                Printer.error("Update verification failed. Rolling back...")
                 self._rollback_update(backup_path, current_script)
                 return
             
@@ -1101,14 +1211,14 @@ class MalScraper:
                     "version": version
                 }, f, indent=2)
             
-            print(f"{Colors.GREEN}{Colors.BOLD}Update prepared successfully!{Colors.NORMAL}")
-            print(f"{Colors.CYAN}The new version will be installed the next time you start malScraper.{Colors.NORMAL}")
-            print(f"{Colors.CYAN}Please exit and restart the application to complete the update.{Colors.NORMAL}")
+            Printer.success("Update prepared successfully!")
+            Printer.info("The new version will be installed the next time you start malScraper.")
+            Printer.info("Please exit and restart the application to complete the update.")
             input("Press Enter to exit and complete the update...")
             sys.exit(0)
             
         except Exception as e:
-            print(f"{Colors.RED}{Colors.BOLD}Error preparing update: {e}{Colors.NORMAL}")
+            Printer.error(f"Error preparing update: {e}")
             # Try to rollback if backup exists
             if 'backup_path' in locals() and backup_path.exists():
                 self._rollback_update(backup_path, current_script)
@@ -1123,39 +1233,29 @@ class MalScraper:
         """Process user command input"""
         option = option.upper()
         
-        if option in ["FULL", "FULL-SCAN", "FSCAN"]:
-            self.full_scan()
+        # Command mapping dictionary
+        command_map = {
+            ("FULL", "FULL-SCAN", "FSCAN"): self.full_scan,
+            ("QUICK", "QUICK-SCAN", "QSCAN"): self.quick_scan,
+            ("QUIT", "EXIT"): self._confirm_exit,
+            ("CLEAR", "CLEAR-HOST", "CLS"): self._clear_screen,
+            ("HELP", "GET-HELP", "?", "-?", "/?", "MENU"): lambda: self._show_help_menu(),
+            ("BACK", "CD ..", "HOME"): self.show_home,
+            ("TUTORIAL",): self.tutorial,
+            ("REOPEN", "OPEN"): self.reopen,
+            ("INSTALL", "UPDATE"): self.install_update,
+        }
         
-        elif option in ["QUICK", "QUICK-SCAN", "QSCAN"]:
-            self.quick_scan()
+        # Find matching command
+        for commands, handler in command_map.items():
+            if option in commands:
+                handler()
+                return
         
-        elif option in ["QUIT", "EXIT"]:
-            self._confirm_exit()
-        
-        elif option in ["CLEAR", "CLEAR-HOST", "CLS"]:
-            self._clear_screen()
-        
-        elif option in ["HELP", "GET-HELP", "?", "-?", "/?", "MENU"]:
-            self._clear_screen()
-            self._print_help()
-        
-        elif option in ["BACK", "CD ..", "HOME"]:
-            # Fixed: Actually show the home menu
-            self.show_home()
-        
-        elif option == "TUTORIAL":
-            self.tutorial()
-        
-        elif option in ["REOPEN", "OPEN"]:
-            self.reopen()
-        
-        elif option in ["INSTALL", "UPDATE"]:
-            self.install_update()
-        
-        else:
-            self._clear_screen()
-            print(f"{Colors.RED}{Colors.BOLD}Error - {Colors.NORMAL}invalid operation\n")
-            self._print_help()
+        # Invalid command
+        self._clear_screen()
+        Printer.error("Error - invalid operation\n")
+        self._print_help()
     
     def run(self):
         """Main application loop"""
@@ -1180,8 +1280,8 @@ class MalScraper:
             except KeyboardInterrupt:  # Handle Ctrl+C
                 self._handle_exit()
             except Exception as e:
-                print(f"\n{Colors.RED}{Colors.BOLD}Unexpected error: {Colors.NORMAL}{str(e)}")
-                print(f"The application will continue running. If this error persists, please restart.")
+                Printer.error(f"\nUnexpected error: {str(e)}")
+                print("The application will continue running. If this error persists, please restart.")
                 time.sleep(2)
 
 

@@ -17,6 +17,7 @@ import json
 import re
 import zipfile
 import shutil
+import hashlib
 from pathlib import Path
 from typing import Optional, Dict, Tuple, List
 import time
@@ -40,7 +41,7 @@ class Colors:
     NORMAL = '\033[0m'
 
 # --- Dependency check and auto-install (runs once at the very top) ---
-required = {"requests", "pyfiglet", "prompt_toolkit"}
+required = {"requests", "pyfiglet", "prompt_toolkit", "packaging"}
 missing = [pkg for pkg in required if importlib.util.find_spec(pkg) is None]
 
 if missing:
@@ -62,6 +63,7 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
 import requests
 import pyfiglet
+from packaging import version
 
 # Command completer class for tab completion
 class CommandCompleter:
@@ -111,31 +113,78 @@ class CommandCompleter:
             return None
 
 # --- Atomic update check (before any other logic) ---
+# Note: This runs before MalScraper class is instantiated, so we need to handle it carefully
 UPDATE_FLAG = Path(__file__).parent / "update_pending.json"
 if UPDATE_FLAG.exists():
     try:
-        with open(UPDATE_FLAG, "r") as f:
+        print(f"{Colors.CYAN}Applying pending update...{Colors.NORMAL}")
+        
+        with open(UPDATE_FLAG, "r", encoding='utf-8') as f:
             update_info = json.load(f)
+        
         new_script_path = Path(update_info["new_script_path"])
         current_script = Path(__file__).resolve()
-        backup_path = current_script.with_suffix('.bak')
-        # Backup current script
-        shutil.copy2(current_script, backup_path)
-        # Replace with new script
-        shutil.copy2(new_script_path, current_script)
-        print(f"{Colors.GREEN}{Colors.BOLD}Update successfully installed!{Colors.NORMAL}")
-        print(f"{Colors.CYAN}A backup of your previous version was saved to:{Colors.NORMAL} {backup_path}")
-        print(f"{Colors.CYAN}You are now running the latest version!{Colors.NORMAL}")
+        backup_path = Path(update_info.get("backup_path", str(current_script.with_suffix('.bak'))))
+        
+        # Verify new script exists
+        if not new_script_path.exists():
+            print(f"{Colors.RED}Update file not found. Skipping update.{Colors.NORMAL}")
+            UPDATE_FLAG.unlink()
+        else:
+            # Quick verification: check if file is valid Python and has required class
+            try:
+                with open(new_script_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    # Quick syntax check
+                    compile(content, str(new_script_path), 'exec')
+                    # Check for required class
+                    if 'class MalScraper' not in content:
+                        raise ValueError("Updated script missing required class")
+            except (SyntaxError, ValueError) as e:
+                print(f"{Colors.RED}Update verification failed: {e}. Skipping update.{Colors.NORMAL}")
+                UPDATE_FLAG.unlink()
+            else:
+                # Backup current script
+                print(f"{Colors.CYAN}Backing up current version...{Colors.NORMAL}")
+                shutil.copy2(current_script, backup_path)
+                
+                # Replace with new script
+                print(f"{Colors.CYAN}Installing new version...{Colors.NORMAL}")
+                shutil.copy2(new_script_path, current_script)
+                
+                # Verify the installed script
+                try:
+                    with open(current_script, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        compile(content, str(current_script), 'exec')
+                        if 'class MalScraper' not in content:
+                            raise ValueError("Installed script missing required class")
+                except (SyntaxError, ValueError) as e:
+                    print(f"{Colors.RED}Installed update failed verification: {e}. Rolling back...{Colors.NORMAL}")
+                    if backup_path.exists():
+                        shutil.copy2(backup_path, current_script)
+                        print(f"{Colors.GREEN}Rolled back to previous version.{Colors.NORMAL}")
+                else:
+                    print(f"{Colors.GREEN}{Colors.BOLD}Update successfully installed!{Colors.NORMAL}")
+                    print(f"{Colors.CYAN}A backup of your previous version was saved to:{Colors.NORMAL} {backup_path}")
+                    print(f"{Colors.CYAN}You are now running the latest version!{Colors.NORMAL}")
+        
         # Clean up
         UPDATE_FLAG.unlink()
-        # Optionally, remove temp dir
         temp_dir = Path(update_info.get("temp_dir", ""))
         if temp_dir and temp_dir.exists():
-            shutil.rmtree(temp_dir)
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception as e:
+                print(f"{Colors.YELLOW}Warning: Could not clean up temp directory: {e}{Colors.NORMAL}")
+                
     except Exception as e:
         print(f"{Colors.RED}{Colors.BOLD}Error finalizing update: {e}{Colors.NORMAL}")
         print(f"Continuing with current version.")
-        UPDATE_FLAG.unlink()
+        try:
+            UPDATE_FLAG.unlink()
+        except Exception:
+            pass
 
 # Current version - Update this manually when releasing a new version
 CURRENT_VERSION = "1.4.7"
@@ -356,6 +405,155 @@ class MalScraper:
             except Exception as e:
                 print(f"{Colors.YELLOW}Warning: Could not remove partial file {output_path}: {e}{Colors.NORMAL}")
     
+    def _calculate_checksum(self, file_path: Path) -> str:
+        """Calculate SHA256 checksum of a file
+        
+        Args:
+            file_path: Path to the file to checksum
+            
+        Returns:
+            SHA256 checksum as hexadecimal string
+        """
+        sha256_hash = hashlib.sha256()
+        try:
+            with open(file_path, "rb") as f:
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+            return sha256_hash.hexdigest()
+        except Exception as e:
+            print(f"{Colors.RED}Error calculating checksum: {e}{Colors.NORMAL}")
+            return ""
+    
+    def _verify_checksum(self, file_path: Path, expected_checksum: Optional[str] = None) -> bool:
+        """Verify file checksum (SHA256)
+        
+        Args:
+            file_path: Path to the file to verify
+            expected_checksum: Expected SHA256 checksum (hexadecimal string)
+            
+        Returns:
+            True if checksum matches or if no expected checksum provided, False otherwise
+        """
+        if not expected_checksum:
+            # If no checksum provided, just verify file exists and is readable
+            return file_path.exists() and file_path.is_file()
+        
+        try:
+            calculated = self._calculate_checksum(file_path)
+            if not calculated:
+                return False
+            return calculated.lower() == expected_checksum.lower().strip()
+        except Exception as e:
+            print(f"{Colors.RED}Error verifying checksum: {e}{Colors.NORMAL}")
+            return False
+    
+    def _is_newer_version(self, current: str, latest: str) -> bool:
+        """Compare versions using packaging library (more robust than manual parsing)
+        
+        Args:
+            current: Current version string
+            latest: Latest version string to compare against
+            
+        Returns:
+            True if latest version is newer than current, False otherwise
+        """
+        try:
+            # Handle 'v' prefix and strip whitespace
+            current = current.lstrip('v').strip()
+            latest = latest.lstrip('v').strip()
+            
+            # Use packaging library for proper semantic version comparison
+            current_parsed = version.parse(current)
+            latest_parsed = version.parse(latest)
+            
+            return latest_parsed > current_parsed
+        except Exception as e:
+            print(f"{Colors.YELLOW}Warning: Could not compare versions '{current}' and '{latest}': {e}{Colors.NORMAL}")
+            return False
+    
+    def _should_check_for_updates(self) -> bool:
+        """Determine if we should check for updates (avoid checking too frequently)
+        
+        Returns:
+            True if we should check for updates, False if we should skip
+        """
+        last_check_file = self.paths['updates_dir'] / '.last_update_check'
+        
+        # Always check if file doesn't exist
+        if not last_check_file.exists():
+            return True
+        
+        try:
+            # Check if last check was more than 24 hours ago
+            last_check_time = datetime.datetime.fromtimestamp(last_check_file.stat().st_mtime)
+            hours_since_check = (datetime.datetime.now() - last_check_time).total_seconds() / 3600
+            
+            # Check once per day, or if forced
+            return hours_since_check >= 24
+        except Exception:
+            # If we can't read the file, check anyway
+            return True
+    
+    def _update_check_timestamp(self):
+        """Update the timestamp of last update check"""
+        last_check_file = self.paths['updates_dir'] / '.last_update_check'
+        try:
+            last_check_file.touch()
+        except Exception:
+            pass  # Non-critical, continue if this fails
+    
+    def _verify_update_success(self, script_path: Path) -> bool:
+        """Verify that the updated script is valid and can be loaded
+        
+        Args:
+            script_path: Path to the script to verify
+            
+        Returns:
+            True if script is valid, False otherwise
+        """
+        try:
+            # Try to parse the file as Python
+            with open(script_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Quick syntax check - try to compile
+                compile(content, str(script_path), 'exec')
+            
+            # Check that it has the expected structure
+            if 'class MalScraper' not in content:
+                print(f"{Colors.RED}Updated script missing required class.{Colors.NORMAL}")
+                return False
+            
+            return True
+        except SyntaxError as e:
+            print(f"{Colors.RED}Updated script has syntax errors: {e}{Colors.NORMAL}")
+            return False
+        except Exception as e:
+            print(f"{Colors.RED}Error verifying update: {e}{Colors.NORMAL}")
+            return False
+    
+    def _rollback_update(self, backup_path: Path, current_script: Path) -> bool:
+        """Rollback to previous version if update fails
+        
+        Args:
+            backup_path: Path to the backup file
+            current_script: Path to the current script
+            
+        Returns:
+            True if rollback successful, False otherwise
+        """
+        try:
+            if not backup_path.exists():
+                print(f"{Colors.RED}Backup not found, cannot rollback.{Colors.NORMAL}")
+                return False
+            
+            print(f"{Colors.YELLOW}Rolling back to previous version...{Colors.NORMAL}")
+            shutil.copy2(backup_path, current_script)
+            print(f"{Colors.GREEN}Rollback successful.{Colors.NORMAL}")
+            return True
+        except Exception as e:
+            print(f"{Colors.RED}Rollback failed: {e}{Colors.NORMAL}")
+            return False
+    
     def _process_payload_report(self):
         """Process the payload report to create AMP report"""
         try:
@@ -387,8 +585,19 @@ class MalScraper:
             print(f"{Colors.RED}Error processing payload report: {e}{Colors.NORMAL}")
             return False
     
-    def _check_for_updates(self):
-        """Check for updates by querying the GitHub API"""
+    def _check_for_updates(self, force: bool = False) -> Tuple[bool, Optional[str], Optional[str], Optional[Dict]]:
+        """Check for updates by querying the GitHub API
+        
+        Args:
+            force: If True, check even if recently checked
+            
+        Returns:
+            Tuple of (update_available, version, download_url, release_data)
+        """
+        # Check if we should skip this check
+        if not force and not self._should_check_for_updates():
+            return False, None, None, None
+        
         try:
             print(f"{Colors.CYAN}Checking for updates...{Colors.NORMAL}")
             
@@ -398,12 +607,48 @@ class MalScraper:
             release_data = response.json()
             latest_version = release_data.get('tag_name', '0.0')
             
+            # Use packaging library for version comparison
+            if not self._is_newer_version(CURRENT_VERSION, latest_version):
+                print(f"{Colors.GREEN}{Colors.BOLD}Running latest version: {CURRENT_VERSION}{Colors.NORMAL}")
+                self._update_check_timestamp()
+                time.sleep(1)
+                return False, None, None, None
+            
+            # Update available
+            print(f"\n{Colors.YELLOW}{Colors.BOLD}New version available!{Colors.NORMAL}")
+            print(f"{Colors.CYAN}Current version:{Colors.NORMAL} {CURRENT_VERSION}")
+            print(f"{Colors.CYAN}Latest version:{Colors.NORMAL} {latest_version}")
+            
             # Get download URLs - prefer the asset if available, otherwise use zipball
             assets = release_data.get('assets', [])
             download_url = None
+            checksum = None
+            
             for asset in assets:
-                if asset.get('name', '').endswith('.zip') or asset.get('name', '').endswith('.py'):
+                name = asset.get('name', '')
+                if name.endswith('.zip') or name.endswith('.py'):
                     download_url = asset.get('browser_download_url')
+                    # Look for checksum file (common naming: filename.sha256 or filename.checksum)
+                    base_name = name.rsplit('.', 1)[0] if '.' in name else name
+                    checksum_asset = next(
+                        (a for a in assets if a.get('name', '').startswith(base_name) and 
+                         (a.get('name', '').endswith('.sha256') or 
+                          a.get('name', '').endswith('.checksum') or
+                          'sha256' in a.get('name', '').lower())),
+                        None
+                    )
+                    if checksum_asset:
+                        try:
+                            checksum_response = requests.get(
+                                checksum_asset.get('browser_download_url'),
+                                timeout=UPDATE_CHECK_TIMEOUT
+                            )
+                            if checksum_response.ok:
+                                checksum_text = checksum_response.text.strip()
+                                # Extract checksum (might be in format "checksum filename" or just "checksum")
+                                checksum = checksum_text.split()[0] if checksum_text.split() else None
+                        except Exception:
+                            pass  # Non-critical, continue without checksum
                     break
             
             # Fallback to zipball if no suitable asset found
@@ -413,54 +658,30 @@ class MalScraper:
             # Get release notes for display
             release_notes = release_data.get('body', 'No release notes available')
             
-            # Compare versions using semantic versioning
-            # Split version strings into components and convert to integers for comparison
-            current_parts = [int(part) for part in CURRENT_VERSION.split('.')]
-            latest_parts = [int(part) for part in latest_version.split('.')]
+            # Display release notes
+            print(f"\n{Colors.CYAN}Release notes:{Colors.NORMAL}")
+            notes_lines = release_notes.split('\n')
+            for i, line in enumerate(notes_lines[:5]):
+                print(f"  {line}")
+            if len(notes_lines) > 5:
+                print(f"  {Colors.YELLOW}...and more{Colors.NORMAL}")
             
-            # Pad the shorter version with zeros for proper comparison
-            while len(current_parts) < len(latest_parts):
-                current_parts.append(0)
-            while len(latest_parts) < len(current_parts):
-                latest_parts.append(0)
-            
-            # Compare each component
-            is_newer_version = False
-            for cur, lat in zip(current_parts, latest_parts):
-                if lat > cur:
-                    is_newer_version = True
-                    break
-                elif cur > lat:
-                    # Current version is newer (development or pre-release version)
-                    break
-            
-            if not is_newer_version:
-                print(f"{Colors.GREEN}{Colors.BOLD}Running latest version: {CURRENT_VERSION}{Colors.NORMAL}")
-                time.sleep(1)
-                return False, None, None, None
-            else:
-                print(f"\n{Colors.YELLOW}{Colors.BOLD}New version available!{Colors.NORMAL}")
-                print(f"{Colors.CYAN}Current version:{Colors.NORMAL} {CURRENT_VERSION}")
-                print(f"{Colors.CYAN}Latest version:{Colors.NORMAL} {latest_version}")
-                print(f"\n{Colors.CYAN}Release notes:{Colors.NORMAL}")
-                
-                # Format and display release notes (limit to ~5 lines for readability)
-                notes_lines = release_notes.split('\n')
-                for i, line in enumerate(notes_lines[:5]):
-                    print(f"  {line}")
-                if len(notes_lines) > 5:
-                    print(f"  {Colors.YELLOW}...and more{Colors.NORMAL}")
-                
-                while True:
-                    option = input(f"\n{Colors.GREEN}Would you like to update now? (Y/N): {Colors.NORMAL}").strip().upper()
-                    if option in ['YES', 'Y']:
-                        return True, latest_version, download_url, release_data
-                    elif option in ['NO', 'N']:
-                        print("Continuing with current version...")
-                        time.sleep(1)
-                        return False, None, None, None
-                    else:
-                        print(f"{Colors.RED}Invalid input. Please enter Y or N.{Colors.NORMAL}")
+            # Prompt user
+            while True:
+                option = input(f"\n{Colors.GREEN}Would you like to update now? (Y/N): {Colors.NORMAL}").strip().upper()
+                if option in ['YES', 'Y']:
+                    self._update_check_timestamp()
+                    # Include checksum in release_data if available
+                    if checksum:
+                        release_data['checksum'] = checksum
+                    return True, latest_version, download_url, release_data
+                elif option in ['NO', 'N']:
+                    self._update_check_timestamp()
+                    print("Continuing with current version...")
+                    time.sleep(1)
+                    return False, None, None, None
+                else:
+                    print(f"{Colors.RED}Invalid input. Please enter Y or N.{Colors.NORMAL}")
                 
         except requests.exceptions.ConnectionError:
             print(f"{Colors.YELLOW}Could not check for updates: No internet connection{Colors.NORMAL}")
@@ -468,7 +689,7 @@ class MalScraper:
             print(f"{Colors.YELLOW}Update check timed out{Colors.NORMAL}")
         except Exception as e:
             print(f"{Colors.YELLOW}Error checking for updates: {e}{Colors.NORMAL}")
-            
+        
         time.sleep(1)
         return False, None, None, None
     
@@ -788,25 +1009,45 @@ class MalScraper:
         print(tut_text)
     
     def install_update(self, version: Optional[str] = None, download_url: Optional[str] = None, release_data: Optional[Dict] = None):
-        """Install the downloaded update (atomic, on next launch)
+        """Install the downloaded update (atomic, on next launch) with improvements
         
         Args:
             version: Version string of the update
             download_url: URL to download the update from
-            release_data: Release data from GitHub API
+            release_data: Release data from GitHub API (may include checksum)
         """
         # Only check for updates if not already provided
         if not (version and download_url and release_data):
-            update_available, version, download_url, release_data = self._check_for_updates()
+            update_available, version, download_url, release_data = self._check_for_updates(force=True)
             if not update_available:
                 return
         
+        # Extract checksum if available
+        expected_checksum = release_data.get('checksum') if release_data else None
+        
         # Download the update
         update_file = self.paths['updates_dir'] / f"malScraper-{version}.zip"
+        print(f"{Colors.CYAN}Downloading update...{Colors.NORMAL}")
+        
         if not self._download_file(download_url, update_file, f"malScraper version {version}"):
             print(f"{Colors.RED}Update download failed.{Colors.NORMAL}")
             time.sleep(2)
             return
+        
+        # Verify checksum if available
+        if expected_checksum:
+            print(f"{Colors.CYAN}Verifying download integrity...{Colors.NORMAL}")
+            if not self._verify_checksum(update_file, expected_checksum):
+                print(f"{Colors.RED}Checksum verification failed! Update may be corrupted.{Colors.NORMAL}")
+                print(f"{Colors.YELLOW}Expected: {expected_checksum}{Colors.NORMAL}")
+                print(f"{Colors.YELLOW}Got: {self._calculate_checksum(update_file)}{Colors.NORMAL}")
+                try:
+                    update_file.unlink()
+                except Exception:
+                    pass
+                time.sleep(2)
+                return
+            print(f"{Colors.GREEN}Checksum verified.{Colors.NORMAL}")
         
         print(f"{Colors.CYAN}Preparing update...{Colors.NORMAL}")
         
@@ -814,6 +1055,11 @@ class MalScraper:
             # Get the current script path
             current_script = Path(__file__).resolve()
             script_name = current_script.name
+            backup_path = current_script.with_suffix('.bak')
+            
+            # Create backup BEFORE doing anything
+            print(f"{Colors.CYAN}Creating backup...{Colors.NORMAL}")
+            shutil.copy2(current_script, backup_path)
             
             # Create a temporary directory for extraction
             temp_dir = self.paths['updates_dir'] / f"temp_{version}"
@@ -822,6 +1068,7 @@ class MalScraper:
             temp_dir.mkdir(exist_ok=True)
             
             # Extract the update
+            print(f"{Colors.CYAN}Extracting update...{Colors.NORMAL}")
             with zipfile.ZipFile(update_file, 'r') as zip_ref:
                 zip_ref.extractall(temp_dir)
             
@@ -837,17 +1084,34 @@ class MalScraper:
                 time.sleep(2)
                 return
             
+            # Verify the new script before installing
+            print(f"{Colors.CYAN}Verifying update...{Colors.NORMAL}")
+            if not self._verify_update_success(new_script):
+                print(f"{Colors.RED}Update verification failed. Rolling back...{Colors.NORMAL}")
+                self._rollback_update(backup_path, current_script)
+                return
+            
             # Write update flag for atomic replacement on next launch
             update_flag = Path(__file__).parent / "update_pending.json"
-            with open(update_flag, "w") as f:
-                json.dump({"new_script_path": str(new_script), "temp_dir": str(temp_dir)}, f)
-            print(f"{Colors.GREEN}{Colors.BOLD}Update downloaded!{Colors.NORMAL}")
+            with open(update_flag, "w", encoding='utf-8') as f:
+                json.dump({
+                    "new_script_path": str(new_script),
+                    "temp_dir": str(temp_dir),
+                    "backup_path": str(backup_path),
+                    "version": version
+                }, f, indent=2)
+            
+            print(f"{Colors.GREEN}{Colors.BOLD}Update prepared successfully!{Colors.NORMAL}")
             print(f"{Colors.CYAN}The new version will be installed the next time you start malScraper.{Colors.NORMAL}")
             print(f"{Colors.CYAN}Please exit and restart the application to complete the update.{Colors.NORMAL}")
             input("Press Enter to exit and complete the update...")
             sys.exit(0)
+            
         except Exception as e:
             print(f"{Colors.RED}{Colors.BOLD}Error preparing update: {e}{Colors.NORMAL}")
+            # Try to rollback if backup exists
+            if 'backup_path' in locals() and backup_path.exists():
+                self._rollback_update(backup_path, current_script)
             time.sleep(2)
     
     def show_home(self):
@@ -898,8 +1162,8 @@ class MalScraper:
         # Setup required directories
         self.ensure_directories()
         
-        # Check for updates
-        update_available, version, download_url, release_data = self._check_for_updates()
+        # Check for updates (with caching - won't check if checked recently)
+        update_available, version, download_url, release_data = self._check_for_updates(force=False)
         if update_available:
             self.install_update(version, download_url, release_data)
         

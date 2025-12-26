@@ -2,6 +2,18 @@
 
 All notable changes to malScraper will be documented in this file.
 
+## [1.5.6] - 2025-01-XX
+
+### Fixed
+- Fixed update check functionality - added User-Agent header required by GitHub API
+- Fixed GitHub API URL (changed from Ryan-Monaghan to rynmon)
+- Improved error handling in update checker with better error messages
+- Fixed version parsing to handle 'v' prefix in release tags
+
+### Changed
+- Update check now works correctly and shows proper error messages
+- UPDATE command now fully functional (was showing "coming soon")
+
 ## [1.5.5] - 2025-01-XX
 
 ### Fixed

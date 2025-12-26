@@ -15,8 +15,12 @@ pub struct UpdateChecker {
 
 impl UpdateChecker {
     pub fn new(paths: Paths) -> Self {
+        // GitHub API requires User-Agent header
+        let user_agent = format!("malScraper/{} (https://github.com/rynmon/malScraper)", 
+            crate::config::CURRENT_VERSION);
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(UPDATE_CHECK_TIMEOUT_SECS))
+            .user_agent(&user_agent)
             .build()
             .expect("Failed to create HTTP client");
 
@@ -66,17 +70,38 @@ impl UpdateChecker {
         .context("Update check timed out")?
         .context("Failed to send request")?;
 
-        let release_data: Value = response
-            .json()
-            .await
-            .context("Failed to parse release data")?;
+        // Check HTTP status
+        let status = response.status();
+        if !status.is_success() {
+            // Try to get error message from response body
+            let error_text = response.text().await.unwrap_or_else(|_| "No error details".to_string());
+            let error_msg = format!(
+                "GitHub API returned error {} {}: {}",
+                status.as_u16(),
+                status.canonical_reason().unwrap_or("Unknown"),
+                error_text
+            );
+            return Err(anyhow::anyhow!(error_msg));
+        }
+
+        // Get response text first for better error messages
+        let response_text = response.text().await.context("Failed to read response body")?;
+        
+        let release_data: Value = serde_json::from_str(&response_text)
+            .context(format!("Failed to parse release data as JSON. Response: {}", 
+                if response_text.len() > 200 { 
+                    format!("{}...", &response_text[..200]) 
+                } else { 
+                    response_text.clone() 
+                }))?;
 
         let latest_version = release_data
             .get("tag_name")
             .and_then(|v| v.as_str())
-            .unwrap_or("0.0.0");
+            .map(|s| s.trim_start_matches('v').to_string())
+            .unwrap_or_else(|| "0.0.0".to_string());
 
-        if !is_newer_version(current_version, latest_version) {
+        if !is_newer_version(current_version, &latest_version) {
             Printer::success(&format!("Running latest version: {}", current_version));
             self.update_check_timestamp();
             return Ok(None);

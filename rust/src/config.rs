@@ -26,7 +26,7 @@ pub static FEEDS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
 });
 
 pub static RELEASE_URL: &str =
-    "https://api.github.com/repos/Ryan-Monaghan/malScraper/releases/latest";
+    "https://api.github.com/repos/rynmon/malScraper/releases/latest";
 
 #[derive(Debug, Clone)]
 pub struct Paths {

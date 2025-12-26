@@ -1,13 +1,25 @@
 mod app;
+mod cli;
+mod compare;
 mod completer;
 mod config;
+mod custom_feeds;
+mod dedupe;
 mod download;
+mod export;
 mod file_ops;
+mod history;
 mod printer;
+mod search;
+mod stats;
 mod update;
 mod utils;
+mod validate;
+mod whitelist;
 
 use app::MalScraper;
+use clap::Parser;
+use cli::Cli;
 use std::process;
 
 #[tokio::main]
@@ -21,8 +33,9 @@ async fn main() {
         use winapi::um::fileapi::{CreateFileA, OPEN_EXISTING};
         use winapi::um::handleapi::INVALID_HANDLE_VALUE;
         use winapi::um::winnt::{FILE_SHARE_WRITE, GENERIC_READ, GENERIC_WRITE};
-        use winapi::um::processenv::SetStdHandle;
+        use winapi::um::processenv::{SetStdHandle, GetStdHandle};
         use winapi::um::winbase::{STD_OUTPUT_HANDLE, STD_INPUT_HANDLE, STD_ERROR_HANDLE};
+        use winapi::um::wincon::{SetConsoleScreenBufferSize, COORD, SMALL_RECT, SetConsoleWindowInfo};
         use std::ffi::CString;
         
         unsafe {
@@ -69,6 +82,27 @@ async fn main() {
                 if stderr_handle != INVALID_HANDLE_VALUE {
                     SetStdHandle(STD_ERROR_HANDLE, stderr_handle);
                 }
+                
+                // Resize console window to ensure all menu items are visible
+                let console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+                if console_handle != INVALID_HANDLE_VALUE {
+                    // Set buffer size (width x height in characters)
+                    // Use a larger buffer to accommodate all menu items
+                    let buffer_size = COORD {
+                        X: 120,  // Width: 120 characters
+                        Y: 3000, // Height: 3000 lines (allows scrolling)
+                    };
+                    SetConsoleScreenBufferSize(console_handle, buffer_size);
+                    
+                    // Set window size (visible area)
+                    let window_rect = SMALL_RECT {
+                        Left: 0,
+                        Top: 0,
+                        Right: 119,  // 120 - 1 (0-indexed)
+                        Bottom: 39,  // 40 lines visible (can be adjusted)
+                    };
+                    SetConsoleWindowInfo(console_handle, 1, &window_rect);
+                }
             }
         }
     }
@@ -80,14 +114,37 @@ async fn main() {
     })
     .expect("Error setting Ctrl+C handler");
 
-    let mut app = match MalScraper::new().await {
-        Ok(app) => app,
-        Err(e) => {
-            eprintln!("Error initializing malScraper: {}", e);
-            process::exit(1);
+    let cli = Cli::parse();
+
+    // Initialize app with custom output directory if provided, otherwise use default
+    let mut app = if let Some(output_dir) = cli.output_dir {
+        match MalScraper::new_with_dir(output_dir).await {
+            Ok(app) => app,
+            Err(e) => {
+                eprintln!("Error initializing malScraper: {}", e);
+                process::exit(1);
+            }
+        }
+    } else {
+        match MalScraper::new().await {
+            Ok(app) => app,
+            Err(e) => {
+                eprintln!("Error initializing malScraper: {}", e);
+                process::exit(1);
+            }
         }
     };
 
+    // Handle CLI commands (non-interactive mode)
+    if let Some(command) = cli.command {
+        if let Err(e) = app.handle_cli_command(command).await {
+            eprintln!("Error: {}", e);
+            process::exit(1);
+        }
+        return;
+    }
+
+    // Interactive mode
     if let Err(e) = app.run().await {
         eprintln!("Error: {}", e);
         process::exit(1);

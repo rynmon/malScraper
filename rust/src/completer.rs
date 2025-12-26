@@ -42,6 +42,29 @@ impl CommandCompleter {
             "exit".to_string(),
             "install".to_string(),
             "update".to_string(),
+            // Statistics
+            "stats".to_string(),
+            "statistics".to_string(),
+            "dashboard".to_string(),
+            // Search and filter
+            "search".to_string(),
+            "filter".to_string(),
+            // Export
+            "export".to_string(),
+            // Deduplication
+            "dedupe".to_string(),
+            "unique".to_string(),
+            // History/Diff
+            "diff".to_string(),
+            "changes".to_string(),
+            // Validation
+            "validate".to_string(),
+            // Comparison
+            "compare".to_string(),
+            // Whitelist
+            "whitelist".to_string(),
+            // Custom feeds
+            "feeds".to_string(),
         ];
 
         Self { commands }

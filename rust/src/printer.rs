@@ -25,7 +25,19 @@ impl Printer {
 
     pub fn menu_item_aligned(description: &str, commands: &str, highlight: Option<&str>, max_len: usize) {
         let desc = if let Some(hl) = highlight {
-            description.replace(hl, &format!("{}", hl.cyan().bold()))
+            // Case-insensitive replacement to match the word in the description
+            let desc_lower = description.to_lowercase();
+            let hl_lower = hl.to_lowercase();
+            if let Some(pos) = desc_lower.find(&hl_lower) {
+                // Find the actual case in the original description
+                let before = &description[..pos];
+                let matched_len = hl_lower.len();
+                let matched = &description[pos..pos + matched_len];
+                let after = &description[pos + matched_len..];
+                format!("{}{}{}", before, matched.cyan().bold(), after)
+            } else {
+                description.to_string()
+            }
         } else {
             description.to_string()
         };

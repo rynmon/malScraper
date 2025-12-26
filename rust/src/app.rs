@@ -2,11 +2,21 @@ use crate::completer::CommandCompleter;
 use crate::config::{
     DIRECTORY_LIST_ITEMS, FEEDS, FULL_SCAN_DOWNLOADS, PayloadOption, Paths, CURRENT_VERSION,
 };
+use crate::compare::Compare;
+use crate::custom_feeds::CustomFeedManager;
+use crate::dedupe::Dedupe;
 use crate::download::Downloader;
+use crate::export::{Exporter, ExportFormat};
 use crate::file_ops::{handle_payload_report, process_payload_report};
+use crate::history::History;
 use crate::printer::Printer;
+use crate::search::Search;
+use crate::stats::Statistics;
 use crate::update::UpdateChecker;
 use crate::utils::{clear_screen, get_base_dir, get_random_exit_message, get_random_splash, open_file, set_console_title};
+use crate::validate::Validator;
+use crate::whitelist::WhitelistManager;
+use crate::cli::{Commands, FeedCommands, WhitelistCommands};
 use anyhow::Result;
 use colored::Colorize;
 use dialoguer::Input;
@@ -25,6 +35,10 @@ pub struct MalScraper {
 impl MalScraper {
     pub async fn new() -> Result<Self> {
         let base_dir = get_base_dir()?;
+        Self::new_with_dir(base_dir).await
+    }
+
+    pub async fn new_with_dir(base_dir: std::path::PathBuf) -> Result<Self> {
         let paths = Paths::new(base_dir);
         paths.ensure_directories()?;
 
@@ -98,6 +112,56 @@ impl MalScraper {
                 "Perform Quick-Scan (Most recent 100 Payload Domains)",
                 "QUICK,QUICK-SCAN,QSCAN",
                 Some("Quick-Scan"),
+            ),
+            (
+                "Show Statistics Dashboard",
+                "STATS,STATISTICS,DASHBOARD",
+                Some("Statistics"),
+            ),
+            (
+                "Search reports for a term",
+                "SEARCH",
+                Some("Search"),
+            ),
+            (
+                "Filter reports by feed type or pattern",
+                "FILTER",
+                Some("Filter"),
+            ),
+            (
+                "Export report to firewall/SIEM format",
+                "EXPORT",
+                Some("Export"),
+            ),
+            (
+                "Deduplicate all reports and create master list",
+                "DEDUPE,UNIQUE",
+                Some("Deduplicate"),
+            ),
+            (
+                "Compare current scan with previous scan",
+                "DIFF,CHANGES",
+                Some("Compare"),
+            ),
+            (
+                "Validate IP addresses and domains",
+                "VALIDATE",
+                Some("Validate"),
+            ),
+            (
+                "Compare two reports side-by-side",
+                "COMPARE",
+                Some("Compare"),
+            ),
+            (
+                "Manage whitelist (exclude false positives)",
+                "WHITELIST",
+                Some("whitelist"),
+            ),
+            (
+                "Manage custom feed URLs",
+                "FEEDS",
+                Some("feed"),
             ),
         ];
 
@@ -443,23 +507,50 @@ impl MalScraper {
         println!(" - malScraper: Scrapes a list of Payload Domains, IOC's & C2 IPs from various feeds for easy blacklisting.");
         println!();
         println!("{}", "SYNOPSIS".bold());
-        println!(" - Run: {} or {}", "malscraper".cyan(), "cargo run".cyan());
+        println!(" - Interactive mode: {} or {}", "malscraper".cyan(), "cargo run".cyan());
+        println!(" - Non-interactive mode: {} <command>", "malscraper".cyan());
         println!(" - Example: {}", "malscraper".cyan());
+        println!(" - Example: {} {}", "malscraper".cyan(), "quick-scan --output-dir ./reports".cyan());
         println!();
         println!("{}", "DESCRIPTION".bold());
         println!(" - A cross-platform tool for collecting malware information from various feeds.");
+        println!(" - Supports interactive and non-interactive (CLI) modes for automation.");
         println!();
-        println!("{}", "WORKFLOW".bold());
+        println!("{}", "BASIC WORKFLOW".bold());
         println!("  1. Run {} for a fast check of the most recent 100 domains.", "Quick-Scan".cyan());
         println!("  2. Run {} to gather comprehensive data from all sources.", "Full-Scan".cyan());
         println!("  3. Use the numbered menu to open specific reports.");
         println!("  4. Reports are saved to your {} (Mac/Linux) or {} (Windows) folder.", "Desktop".cyan(), "Documents".cyan());
+        println!();
+        println!("{}", "ANALYSIS FEATURES".bold());
+        println!("  - {}: View statistics dashboard with report metrics", "STATS".cyan());
+        println!("  - {}: Search for specific terms across all reports", "SEARCH <term>".cyan());
+        println!("  - {}: Filter reports by feed type or pattern", "FILTER [feed_type] [pattern]".cyan());
+        println!("  - {}: Compare two reports side-by-side", "COMPARE <report1> <report2>".cyan());
+        println!("  - {}: Compare current scan with previous scan", "DIFF".cyan());
+        println!("  - {}: Validate IP addresses and domains", "VALIDATE <report>".cyan());
+        println!();
+        println!("{}", "DATA MANAGEMENT".bold());
+        println!("  - {}: Deduplicate all reports into a master list", "DEDUPE".cyan());
+        println!("  - {}: Export reports to firewall/SIEM formats", "EXPORT <format> <report>".cyan());
+        println!("     Formats: iptables, windows, pfsense, json, csv, stix, taxii");
+        println!("  - {}: Manage whitelist to exclude false positives", "WHITELIST".cyan());
+        println!("     Commands: ADD <indicator> [reason], LIST, REMOVE <indicator>");
+        println!("  - {}: Manage custom feed URLs", "FEEDS".cyan());
+        println!("     Commands: ADD <url> [name] [description], LIST, REMOVE <name_or_url>");
         println!();
         println!("{}", "MENU NAVIGATION".bold());
         println!(" - Type {} to see available commands.", "HELP".cyan());
         println!(" - Type {} to view this tutorial again.", "TUTORIAL".cyan());
         println!(" - Type {} to check for updates.", "UPDATE".cyan());
         println!(" - Type {} to exit the application.", "QUIT".cyan());
+        println!();
+        println!("{}", "NON-INTERACTIVE MODE".bold());
+        println!(" - Use CLI arguments for automation and scripting");
+        println!(" - Example: {} {}", "malscraper".cyan(), "quick-scan --output-dir ./reports".cyan());
+        println!(" - Example: {} {}", "malscraper".cyan(), "export iptables payload".cyan());
+        println!(" - Example: {} {}", "malscraper".cyan(), "search malware.com".cyan());
+        println!(" - Run {} {} to see all available commands", "malscraper".cyan(), "--help".cyan());
         println!();
     }
 
@@ -517,13 +608,645 @@ impl MalScraper {
                     }
                 }
             }
+            "STATS" | "STATISTICS" | "DASHBOARD" => {
+                if let Err(e) = Statistics::display_dashboard(&self.paths) {
+                    Printer::error(&format!("Failed to generate statistics: {}", e));
+                }
+            }
+            "SEARCH" => {
+                Printer::error("Usage: SEARCH <term>");
+                Printer::info("Example: SEARCH example.com");
+                Printer::info("Example: SEARCH malware");
+            }
+            cmd if cmd.starts_with("SEARCH ") => {
+                let term = cmd.strip_prefix("SEARCH ").unwrap_or("").trim();
+                if term.is_empty() {
+                    Printer::error("Usage: SEARCH <term>");
+                    Printer::info("Example: SEARCH example.com");
+                } else {
+                    match Search::search_all_reports(&self.paths, term, false) {
+                        Ok(results) => Search::display_results(&results, term),
+                        Err(e) => Printer::error(&format!("Search failed: {}", e)),
+                    }
+                }
+            }
+            "FILTER" => {
+                Printer::error("Usage: FILTER [feed_type] [pattern]");
+                Printer::info("Feed types: payload, amp, c2, hex, haus, phish, top100");
+                Printer::info("Example: FILTER payload example.com");
+                Printer::info("Example: FILTER c2");
+                Printer::info("Example: FILTER .exe");
+            }
+            cmd if cmd.starts_with("FILTER ") => {
+                let filter_args = cmd.strip_prefix("FILTER ").unwrap_or("").trim();
+                if filter_args.is_empty() {
+                    Printer::error("Usage: FILTER [feed_type] [pattern]");
+                    Printer::info("Feed types: payload, amp, c2, hex, haus, phish, top100");
+                    Printer::info("Example: FILTER payload example.com");
+                    Printer::info("Example: FILTER c2");
+                    Printer::info("Example: FILTER .exe");
+                } else {
+                    let args: Vec<&str> = filter_args.split_whitespace().collect();
+                    // Try to determine if first arg is a feed type
+                    let known_feeds = ["payload", "payloads", "amp", "c2", "c2servers", "c2-servers", 
+                                       "hex", "hashes", "haus", "urlhaus", "url-haus", 
+                                       "phish", "phishtank", "phish-tank", "top100", "top", "top-100"];
+                    
+                    let (feed_type, pattern) = if args.len() > 1 {
+                        // Two or more args: first is feed type, rest is pattern
+                        let feed = if known_feeds.contains(&args[0].to_lowercase().as_str()) {
+                            Some(args[0])
+                        } else {
+                            None
+                        };
+                        let pat = Some(args[1..].join(" "));
+                        (feed, pat)
+                    } else {
+                        // Single arg: could be feed type or pattern
+                        if known_feeds.contains(&args[0].to_lowercase().as_str()) {
+                            (Some(args[0]), None)
+                        } else {
+                            (None, Some(args[0].to_string()))
+                        }
+                    };
+
+                    match Search::filter_reports(&self.paths, feed_type, pattern.as_deref()) {
+                        Ok(results) => Search::display_filter_results(&results, feed_type, pattern.as_deref()),
+                        Err(e) => Printer::error(&format!("Filter failed: {}", e)),
+                    }
+                }
+            }
+            "EXPORT" => {
+                Printer::error("Usage: EXPORT <format> <report> [output_file]");
+                Printer::info("Formats: iptables, windows, pfsense, json, csv, stix, taxii");
+                Printer::info("Reports: payload, amp, c2, hex, haus, phish, top100");
+                Printer::info("Example: EXPORT json payload");
+                Printer::info("Example: EXPORT iptables c2 firewall_rules.sh");
+            }
+            cmd if cmd.starts_with("EXPORT ") => {
+                let export_args = cmd.strip_prefix("EXPORT ").unwrap_or("").trim();
+                if export_args.is_empty() {
+                    Printer::error("Usage: EXPORT <format> <report> [output_file]");
+                    Printer::info("Formats: iptables, windows, pfsense, json, csv, stix, taxii");
+                    Printer::info("Reports: payload, amp, c2, hex, haus, phish, top100");
+                    Printer::info("Example: EXPORT json payload");
+                    Printer::info("Example: EXPORT iptables c2 firewall_rules.sh");
+                } else {
+                    let args: Vec<&str> = export_args.split_whitespace().collect();
+                    if args.len() < 2 {
+                        Printer::error("Usage: EXPORT <format> <report> [output_file]");
+                        Printer::info("Example: EXPORT json payload");
+                    } else {
+                        let format_str = args[0];
+                        let report_name = args[1];
+                        let output_file = args.get(2).copied();
+
+                        match ExportFormat::from_str(format_str) {
+                            Some(format) => {
+                                Printer::info(&format!("Exporting {} to {} format...", report_name, format.as_str()));
+                                match Exporter::export(&self.paths, format, report_name, output_file) {
+                                    Ok(output_path) => {
+                                        Printer::success(&format!("Export completed: {}", output_path));
+                                        Printer::info("File saved to current directory");
+                                    }
+                                    Err(e) => {
+                                        Printer::error(&format!("Export failed: {}", e));
+                                    }
+                                }
+                            }
+                            None => {
+                                Printer::error(&format!("Unknown export format: {}", format_str));
+                                Printer::info("Valid formats: iptables, windows, pfsense, json, csv, stix, taxii");
+                            }
+                        }
+                    }
+                }
+            }
+            "DEDUPE" | "UNIQUE" => {
+                // DEDUPE can be called without arguments, so execute it
+                match Dedupe::deduplicate_all_reports(&self.paths, None) {
+                    Ok(output_path) => {
+                        Printer::success(&format!("Deduplication completed: {}", output_path));
+                        Printer::info("Master list saved to current directory");
+                    }
+                    Err(e) => {
+                        Printer::error(&format!("Deduplication failed: {}", e));
+                        Printer::info("Usage: DEDUPE [output_file]");
+                        Printer::info("Example: DEDUPE");
+                        Printer::info("Example: DEDUPE MasterList.txt");
+                    }
+                }
+            }
+            cmd if cmd.starts_with("DEDUPE ") || cmd.starts_with("UNIQUE ") => {
+                let args: Vec<&str> = command.split_whitespace().collect();
+                let output_file = args.get(1).copied();
+
+                match Dedupe::deduplicate_all_reports(&self.paths, output_file) {
+                    Ok(output_path) => {
+                        Printer::success(&format!("Deduplication completed: {}", output_path));
+                        Printer::info("Master list saved to current directory");
+                    }
+                    Err(e) => {
+                        Printer::error(&format!("Deduplication failed: {}", e));
+                        Printer::info("Usage: DEDUPE [output_file]");
+                        Printer::info("Example: DEDUPE");
+                        Printer::info("Example: DEDUPE MasterList.txt");
+                    }
+                }
+            }
+            "DIFF" | "CHANGES" => {
+                match History::compare_with_history(&self.paths) {
+                    Ok(_) => {
+                        // History::compare_with_history handles all output
+                    }
+                    Err(e) => {
+                        Printer::error(&format!("Failed to compare with history: {}", e));
+                        Printer::info("Usage: DIFF or CHANGES");
+                        Printer::info("Example: DIFF");
+                    }
+                }
+            }
+            "VALIDATE" => {
+                Printer::error("Usage: VALIDATE <report>");
+                Printer::info("Reports: payload, amp, c2, hex, haus, phish, top100");
+                Printer::info("Example: VALIDATE payload");
+            }
+            cmd if cmd.starts_with("VALIDATE ") => {
+                let report_name = cmd.strip_prefix("VALIDATE ").unwrap_or("").trim();
+                if report_name.is_empty() {
+                    Printer::error("Usage: VALIDATE <report>");
+                    Printer::info("Reports: payload, amp, c2, hex, haus, phish, top100");
+                    Printer::info("Example: VALIDATE payload");
+                } else {
+                    match Validator::validate_report(&self.paths, report_name).await {
+                        Ok(results) => {
+                            Validator::display_results(&results, report_name);
+                        }
+                        Err(e) => {
+                            Printer::error(&format!("Validation failed: {}", e));
+                        }
+                    }
+                }
+            }
+            "COMPARE" => {
+                Printer::error("Usage: COMPARE <report1> <report2>");
+                Printer::info("Example: COMPARE payload c2");
+                Printer::info("Available reports: payload, amp, c2, top100, hex, haus, phish");
+            }
+            cmd if cmd.starts_with("COMPARE ") => {
+                let args: Vec<&str> = cmd.strip_prefix("COMPARE ").unwrap_or("").trim().split_whitespace().collect();
+                if args.len() < 2 {
+                    Printer::error("Usage: COMPARE <report1> <report2>");
+                    Printer::info("Example: COMPARE payload c2");
+                    Printer::info("Available reports: payload, amp, c2, top100, hex, haus, phish");
+                } else {
+                    match Compare::compare_reports(&self.paths, args[0], args[1]) {
+                        Ok(results) => {
+                            Compare::display_results(&results);
+                        }
+                        Err(e) => {
+                            Printer::error(&format!("Comparison failed: {}", e));
+                        }
+                    }
+                }
+            }
+            "WHITELIST" => {
+                Printer::error("Usage: WHITELIST <command>");
+                Printer::info("Commands: ADD <indicator> [reason], LIST, REMOVE <indicator>");
+                Printer::info("Example: WHITELIST ADD example.com \"False positive\"");
+                Printer::info("Example: WHITELIST LIST");
+                Printer::info("Example: WHITELIST REMOVE example.com");
+            }
+            cmd if cmd.starts_with("WHITELIST ") => {
+                let whitelist_args = cmd.strip_prefix("WHITELIST ").unwrap_or("").trim();
+                if whitelist_args.is_empty() {
+                    Printer::error("Usage: WHITELIST <command>");
+                    Printer::info("Commands: ADD <indicator> [reason], LIST, REMOVE <indicator>");
+                    Printer::info("Example: WHITELIST ADD example.com \"False positive\"");
+                    Printer::info("Example: WHITELIST LIST");
+                    Printer::info("Example: WHITELIST REMOVE example.com");
+                } else {
+                    let args: Vec<&str> = whitelist_args.split_whitespace().collect();
+                    match args[0].to_uppercase().as_str() {
+                        "ADD" => {
+                            if args.len() < 2 {
+                                Printer::error("Usage: WHITELIST ADD <indicator> [reason]");
+                                Printer::info("Example: WHITELIST ADD example.com \"False positive\"");
+                            } else {
+                                let indicator = args[1];
+                                let reason = if args.len() > 2 {
+                                    Some(args[2..].join(" "))
+                                } else {
+                                    None
+                                };
+
+                                match WhitelistManager::add_indicator(&self.paths, indicator, reason) {
+                                    Ok(_) => {
+                                        // Success message is printed by add_indicator
+                                    }
+                                    Err(e) => {
+                                        Printer::error(&format!("Failed to add to whitelist: {}", e));
+                                    }
+                                }
+                            }
+                        }
+                        "LIST" => {
+                            if let Err(e) = WhitelistManager::list_indicators(&self.paths) {
+                                Printer::error(&format!("Failed to list whitelist: {}", e));
+                            }
+                        }
+                        "REMOVE" | "DELETE" => {
+                            if args.len() < 2 {
+                                Printer::error("Usage: WHITELIST REMOVE <indicator>");
+                                Printer::info("Example: WHITELIST REMOVE example.com");
+                            } else {
+                                let indicator = args[1..].join(" ");
+                                match WhitelistManager::remove_indicator(&self.paths, &indicator) {
+                                    Ok(_) => {
+                                        // Success message is printed by remove_indicator
+                                    }
+                                    Err(e) => {
+                                        Printer::error(&format!("Failed to remove from whitelist: {}", e));
+                                    }
+                                }
+                            }
+                        }
+                        _ => {
+                            Printer::error(&format!("Unknown command: {}", args[0]));
+                            Printer::info("Valid commands: ADD, LIST, REMOVE");
+                        }
+                    }
+                }
+            }
+            "FEEDS" => {
+                Printer::error("Usage: FEEDS <command>");
+                Printer::info("Commands: ADD <url> [name] [description], LIST, REMOVE <name_or_url>");
+                Printer::info("Example: FEEDS ADD https://example.com/feed.txt");
+                Printer::info("Example: FEEDS LIST");
+                Printer::info("Example: FEEDS REMOVE \"My Feed\"");
+            }
+            cmd if cmd.starts_with("FEEDS ") => {
+                let feeds_args = cmd.strip_prefix("FEEDS ").unwrap_or("").trim();
+                if feeds_args.is_empty() {
+                    Printer::error("Usage: FEEDS <command>");
+                    Printer::info("Commands: ADD <url> [name] [description], LIST, REMOVE <name_or_url>");
+                    Printer::info("Example: FEEDS ADD https://example.com/feed.txt");
+                    Printer::info("Example: FEEDS LIST");
+                } else {
+                    let args: Vec<&str> = feeds_args.split_whitespace().collect();
+                    match args[0].to_uppercase().as_str() {
+                        "ADD" => {
+                            if args.len() < 2 {
+                                Printer::error("Usage: FEEDS ADD <url> [name] [description]");
+                                Printer::info("Example: FEEDS ADD https://example.com/feed.txt \"My Feed\" \"Custom threat feed\"");
+                            } else {
+                                let url = args[1];
+                                let name = args.get(2).copied();
+                                let description = if args.len() > 3 {
+                                    Some(args[3..].join(" "))
+                                } else {
+                                    None
+                                };
+
+                                match CustomFeedManager::add_feed(&self.paths, url, name, description) {
+                                    Ok(_) => {
+                                        Printer::success("Custom feed added successfully!");
+                                    }
+                                    Err(e) => {
+                                        Printer::error(&format!("Failed to add feed: {}", e));
+                                    }
+                                }
+                            }
+                        }
+                        "LIST" => {
+                            if let Err(e) = CustomFeedManager::list_feeds(&self.paths) {
+                                Printer::error(&format!("Failed to list feeds: {}", e));
+                            }
+                        }
+                        "REMOVE" | "DELETE" => {
+                            if args.len() < 2 {
+                                Printer::error("Usage: FEEDS REMOVE <name_or_url>");
+                                Printer::info("Example: FEEDS REMOVE \"My Feed\"");
+                            } else {
+                                let name_or_url = args[1..].join(" ");
+                                match CustomFeedManager::remove_feed(&self.paths, &name_or_url) {
+                                    Ok(_) => {
+                                        Printer::success("Custom feed removed successfully!");
+                                    }
+                                    Err(e) => {
+                                        Printer::error(&format!("Failed to remove feed: {}", e));
+                                    }
+                                }
+                            }
+                        }
+                        _ => {
+                            Printer::error(&format!("Unknown command: {}", args[0]));
+                            Printer::info("Valid commands: ADD, LIST, REMOVE");
+                        }
+                    }
+                }
+            }
             _ => {
-                clear_screen();
-                Printer::error("Error - invalid operation\n");
-                self.print_help();
+                Printer::error(&format!("Unknown command: '{}'", command));
+                Printer::info("Type HELP to see all available commands");
+                Printer::info("Type TUTORIAL for usage examples");
+                println!();
             }
         }
 
+        Ok(())
+    }
+
+    pub async fn handle_cli_command(&mut self, command: Commands) -> Result<()> {
+        match command {
+            Commands::QuickScan { output_dir } => {
+                if let Some(dir) = output_dir {
+                    self.paths = Paths::new(dir);
+                    self.paths.ensure_directories()?;
+                }
+                // Use default payload option for non-interactive mode
+                self.quick_scan_non_interactive(PayloadOption::LeaveAsIs).await?;
+            }
+            Commands::FullScan { output_dir } => {
+                if let Some(dir) = output_dir {
+                    self.paths = Paths::new(dir);
+                    self.paths.ensure_directories()?;
+                }
+                // Use default payload option for non-interactive mode
+                self.full_scan_non_interactive(PayloadOption::LeaveAsIs).await?;
+            }
+            Commands::Stats => {
+                Statistics::display_dashboard(&self.paths)?;
+            }
+            Commands::Search { term } => {
+                match Search::search_all_reports(&self.paths, &term, false) {
+                    Ok(results) => Search::display_results(&results, &term),
+                    Err(e) => {
+                        Printer::error(&format!("Search failed: {}", e));
+                        return Err(e);
+                    }
+                }
+            }
+            Commands::Filter { feed_type, pattern } => {
+                match Search::filter_reports(
+                    &self.paths,
+                    feed_type.as_deref(),
+                    pattern.as_deref(),
+                ) {
+                    Ok(results) => {
+                        Search::display_filter_results(
+                            &results,
+                            feed_type.as_deref(),
+                            pattern.as_deref(),
+                        );
+                    }
+                    Err(e) => {
+                        Printer::error(&format!("Filter failed: {}", e));
+                        return Err(e);
+                    }
+                }
+            }
+            Commands::Export { format, report, output } => {
+                let format_enum = ExportFormat::from_str(&format)
+                    .ok_or_else(|| anyhow::anyhow!("Unknown export format: {}", format))?;
+                let output_str = output.as_ref().and_then(|p| p.to_str());
+                match Exporter::export(&self.paths, format_enum, &report, output_str) {
+                    Ok(output_path) => {
+                        Printer::success(&format!("Export completed: {}", output_path));
+                    }
+                    Err(e) => {
+                        Printer::error(&format!("Export failed: {}", e));
+                        return Err(e);
+                    }
+                }
+            }
+            Commands::Dedupe { output } => {
+                let output_str = output.as_ref().and_then(|p| p.to_str());
+                match Dedupe::deduplicate_all_reports(&self.paths, output_str) {
+                    Ok(output_path) => {
+                        Printer::success(&format!("Deduplication completed: {}", output_path));
+                    }
+                    Err(e) => {
+                        Printer::error(&format!("Deduplication failed: {}", e));
+                        return Err(e);
+                    }
+                }
+            }
+            Commands::Diff => {
+                History::compare_with_history(&self.paths)?;
+            }
+            Commands::Compare { report1, report2 } => {
+                match Compare::compare_reports(&self.paths, &report1, &report2) {
+                    Ok(results) => {
+                        Compare::display_results(&results);
+                    }
+                    Err(e) => {
+                        Printer::error(&format!("Comparison failed: {}", e));
+                        return Err(e);
+                    }
+                }
+            }
+            Commands::Whitelist { command } => {
+                match command {
+                    WhitelistCommands::Add { indicator, reason } => {
+                        match WhitelistManager::add_indicator(&self.paths, &indicator, reason) {
+                            Ok(_) => {
+                                // Success message is printed by add_indicator
+                            }
+                            Err(e) => {
+                                Printer::error(&format!("Failed to add to whitelist: {}", e));
+                                return Err(e);
+                            }
+                        }
+                    }
+                    WhitelistCommands::List => {
+                        WhitelistManager::list_indicators(&self.paths)?;
+                    }
+                    WhitelistCommands::Remove { indicator } => {
+                        match WhitelistManager::remove_indicator(&self.paths, &indicator) {
+                            Ok(_) => {
+                                // Success message is printed by remove_indicator
+                            }
+                            Err(e) => {
+                                Printer::error(&format!("Failed to remove from whitelist: {}", e));
+                                return Err(e);
+                            }
+                        }
+                    }
+                }
+            }
+            Commands::Validate { report } => {
+                match Validator::validate_report(&self.paths, &report).await {
+                    Ok(results) => {
+                        Validator::display_results(&results, &report);
+                    }
+                    Err(e) => {
+                        Printer::error(&format!("Validation failed: {}", e));
+                        return Err(e);
+                    }
+                }
+            }
+            Commands::Feeds { command } => {
+                match command {
+                    FeedCommands::Add { url, name, description } => {
+                        match CustomFeedManager::add_feed(
+                            &self.paths,
+                            &url,
+                            name.as_deref(),
+                            description,
+                        ) {
+                            Ok(_) => {
+                                Printer::success("Custom feed added successfully!");
+                            }
+                            Err(e) => {
+                                Printer::error(&format!("Failed to add feed: {}", e));
+                                return Err(e);
+                            }
+                        }
+                    }
+                    FeedCommands::List => {
+                        CustomFeedManager::list_feeds(&self.paths)?;
+                    }
+                    FeedCommands::Remove { name_or_url } => {
+                        match CustomFeedManager::remove_feed(&self.paths, &name_or_url) {
+                            Ok(_) => {
+                                Printer::success("Custom feed removed successfully!");
+                            }
+                            Err(e) => {
+                                Printer::error(&format!("Failed to remove feed: {}", e));
+                                return Err(e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    async fn full_scan_non_interactive(&mut self, payload_option: PayloadOption) -> Result<()> {
+        clear_screen();
+        println!("{}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
+        println!("{}", get_random_splash());
+
+        // Remove existing reports
+        for path in [
+            &self.paths.payload_report,
+            &self.paths.amp_report,
+            &self.paths.c2_report,
+            &self.paths.top_100,
+            &self.paths.hex_report,
+            &self.paths.haus_mal_down,
+            &self.paths.phish_tank,
+        ] {
+            if path.exists() {
+                let _ = fs::remove_file(path);
+            }
+        }
+
+        let mut status = std::collections::HashMap::new();
+        let mut payload_line_count = None;
+
+        println!("{}\n", "Starting downloads...".bold());
+
+        // Download standard feeds
+        for download in FULL_SCAN_DOWNLOADS.iter() {
+            let success = self
+                .download_with_status(
+                    download.name,
+                    download.feed_key,
+                    download.path_key,
+                    download.header,
+                )
+                .await?;
+            status.insert(download.name.to_string(), success);
+        }
+
+        // Payload report (special handling)
+        println!("Payload domains:");
+        let start = Instant::now();
+        match self.download_payload_feed_with_options(payload_option).await? {
+            (true, Some(count)) => {
+                payload_line_count = Some(count);
+                let elapsed = start.elapsed().as_secs_f64();
+                Printer::success(&format!("Success ({:.1}s)", elapsed));
+                if payload_option == PayloadOption::LeaveAsIs
+                    || payload_option == PayloadOption::Obfuscate
+                {
+                    Printer::success(&format!("{} saved.", self.paths.payload_report.display()));
+                }
+                if payload_option == PayloadOption::Zip || payload_option == PayloadOption::Both {
+                    let zip_path = self.paths.payload_report.with_extension("zip");
+                    Printer::success(&format!("{} saved.", zip_path.display()));
+                }
+                println!();
+                if self.paths.payload_report.exists() {
+                    process_payload_report(&self.paths)?;
+                }
+            }
+            (false, _) => {
+                Printer::error("Failed\n");
+                status.insert("Payload domains".to_string(), false);
+            }
+            _ => {}
+        }
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(1500)).await;
+
+        // Print summary
+        let succeeded: Vec<_> = status
+            .iter()
+            .filter(|(_, &v)| v)
+            .map(|(k, _)| k.clone())
+            .collect();
+        let failed: Vec<_> = status
+            .iter()
+            .filter(|(_, &v)| !v)
+            .map(|(k, _)| k.clone())
+            .collect();
+
+        println!("{}", "Download Summary:".bold());
+        println!("- {}/{} downloads succeeded.", succeeded.len(), status.len());
+        if let Some(count) = payload_line_count {
+            println!("- Payload domains: {} lines", count);
+        }
+        if !failed.is_empty() {
+            println!("- {} download(s) failed: {}.", failed.len(), failed.join(", "));
+        }
+        println!();
+
+        if !status.values().all(|&v| v) {
+            Printer::warning("Warning: Some downloads may have failed. Check the reports.\n");
+        }
+
+        Ok(())
+    }
+
+    async fn quick_scan_non_interactive(&mut self, payload_option: PayloadOption) -> Result<()> {
+        clear_screen();
+        println!("{}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
+        println!("{}", get_random_splash());
+
+        // Remove existing reports
+        for path in [&self.paths.payload_report, &self.paths.top_100] {
+            if path.exists() {
+                let _ = fs::remove_file(path);
+            }
+        }
+
+        match self.download_payload_feed_with_options(payload_option).await? {
+            (true, _) => {
+                if self.paths.payload_report.exists() {
+                    process_payload_report(&self.paths)?;
+                }
+            }
+            (false, _) => {
+                Printer::error("Failed to download payload report.");
+                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+            }
+        }
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(1500)).await;
         Ok(())
     }
 

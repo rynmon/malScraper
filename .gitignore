@@ -1,3 +1,29 @@
+# Python (legacy - not used in prod/dev)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.bak
 python/malScraper.bak
-*.md
 UPDATE_IMPROVEMENTS_EXAMPLE.py
+
+# Rust
+target/
+Cargo.lock
+*.pdb
+*.exe
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.log

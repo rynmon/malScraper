@@ -104,7 +104,7 @@
     
     <div class="container">
         <div class="content">
-            <h1 class="section-title">malscraper v2.0.0</h1>
+            <h1 class="section-title">malscraper v2.0.1</h1>
             <p>a high-performance rust-based tool that streamlines the process of scraping and managing lists of payload domains, ioc's & c2 ips from various feeds for easy blacklisting. now with advanced analysis, export capabilities, and automation support.</p>
             
             <div class="button-container">
@@ -1115,6 +1115,24 @@
             
             <div class="doc-section" id="current-release-notes">
                 <h2>current release notes</h2>
+                <h3>malscraper 2.0.1 - automatic update installation</h3>
+                
+                <h4>overview</h4>
+                <p>added automatic update installation feature, allowing users to update directly from within the application without manual downloads.</p>
+                
+                <h4>new features</h4>
+                <ul>
+                    <li><strong>automatic update installation</strong> - download and install updates directly from the app</li>
+                    <li><strong>platform detection</strong> - automatically finds the correct binary for your operating system and architecture</li>
+                    <li><strong>download progress</strong> - shows real-time download progress with percentage and bytes</li>
+                    <li><strong>automatic backup</strong> - creates a backup of the current executable before updating</li>
+                    <li><strong>executable permissions</strong> - automatically sets correct permissions on unix systems</li>
+                    <li><strong>error handling</strong> - graceful error handling with fallback to manual download instructions</li>
+                </ul>
+                
+                <h4>usage</h4>
+                <p>simply run <code>UPDATE</code> or <code>INSTALL</code> from the interactive menu, or use the update checker that runs automatically on startup. when a new version is available, you'll be prompted to update.</p>
+                
                 <h3>malscraper 2.0.0 - rust rewrite & major feature expansion</h3>
                 
                 <h4>overview</h4>
@@ -1247,6 +1265,19 @@ malscraper --help</pre>
             <div class="doc-section" id="version-history">
                 <h2>version history</h2>
                 <ul>
+                    <li>
+                        <strong>2.0.1 - automatic update installation</strong>
+                        <ul>
+                            <li><strong>automatic updates:</strong></li>
+                            <li>download and install updates directly from within the application</li>
+                            <li>platform detection for windows, linux, and macos</li>
+                            <li>architecture detection (x86_64, aarch64)</li>
+                            <li>download progress indicator</li>
+                            <li>automatic backup before replacement</li>
+                            <li>executable permissions set automatically on unix</li>
+                            <li>graceful error handling with fallback instructions</li>
+                        </ul>
+                    </li>
                     <li>
                         <strong>2.0.0 - rust rewrite & major feature expansion</strong>
                         <ul>

@@ -1,4 +1,4 @@
-# malScraper v2.0.0
+# malScraper v2.0.1
 
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -77,6 +77,7 @@ The binary will be at `rust/target/release/malscraper` (or `.exe` on Windows).
   malscraper export iptables payload
   malscraper search malware.com
   ```
+- **Automatic Updates** (`UPDATE`, `INSTALL`) - Automatically download and install updates with platform detection
 
 ## 📋 Usage
 

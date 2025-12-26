@@ -14,7 +14,10 @@
 - **Memory Safe**: Rust's ownership system prevents common bugs
 - **All Original Features**: Maintains compatibility with the Python version
 
-### v2.0.0 New Features
+### v2.0.1 New Features
+- **Automatic Update Installation** - Download and install updates directly from within the application with platform detection
+
+### v2.0.0 Features
 - **Statistics Dashboard** - Comprehensive analytics and metrics
 - **Search & Filter** - Search across reports with regex support
 - **Export Formats** - Firewall rules, SIEM formats (JSON/CSV), STIX/TAXII

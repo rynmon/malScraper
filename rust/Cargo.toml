@@ -1,6 +1,6 @@
 [package]
 name = "malscraper"
-version = "1.5.4"
+version = "1.5.5"
 edition = "2021"
 authors = ["Ryan Monaghan"]
 description = "Cross-platform tool to scrape malware domains, IOCs, and C2 IPs from various feeds"
@@ -34,10 +34,13 @@ crossterm = "0.27"
 chrono = "0.4"
 
 [target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3", features = ["wincon", "libloaderapi", "processthreadsapi"] }
+winapi = { version = "0.3", features = ["wincon", "libloaderapi", "processthreadsapi", "consoleapi", "processenv", "fileapi", "winnt", "winbase"] }
 
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
+
+[target.'cfg(windows)'.build-dependencies]
+embed-resource = "2.0"
 

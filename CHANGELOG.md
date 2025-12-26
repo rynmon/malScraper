@@ -2,6 +2,23 @@
 
 All notable changes to malScraper will be documented in this file.
 
+## [1.5.5] - 2025-01-XX
+
+### Fixed
+- Fixed Windows taskbar icon display (now shows custom icon instead of console host icon)
+- Fixed text alignment in help menu (all command aliases now properly aligned)
+- Fixed label padding in banner (consistent spacing for all labels)
+- Fixed version display to automatically sync with Cargo.toml
+
+### Added
+- Automatic version syncing from Cargo.toml at compile time
+- Windows application icon embedded in executable
+- Improved console allocation for Windows subsystem applications
+
+### Changed
+- Version now automatically reads from Cargo.toml (no manual updates needed)
+- Better visual alignment throughout the UI
+
 ## [1.5.0] - 2025-01-XX
 
 ### 🎉 Major Release: Rust Rewrite

@@ -6,7 +6,8 @@ use std::path::PathBuf;
 pub const REQUEST_TIMEOUT_SECS: u64 = 30;
 pub const UPDATE_CHECK_TIMEOUT_SECS: u64 = 10;
 pub const TOP_DOMAINS_COUNT: usize = 100;
-pub const CURRENT_VERSION: &str = "1.5.0";
+// Automatically sync version from Cargo.toml at compile time
+pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub static FEEDS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     let mut m = HashMap::new();

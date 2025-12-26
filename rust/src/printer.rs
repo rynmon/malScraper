@@ -23,18 +23,21 @@ impl Printer {
         format!("{}", "[*]".bold())
     }
 
-    pub fn menu_item(description: &str, commands: &str, highlight: Option<&str>) {
+    pub fn menu_item_aligned(description: &str, commands: &str, highlight: Option<&str>, max_len: usize) {
         let desc = if let Some(hl) = highlight {
             description.replace(hl, &format!("{}", hl.cyan().bold()))
         } else {
             description.to_string()
         };
 
-        // Calculate padding based on original description length (without ANSI codes)
+        // Calculate padding to align all command text
+        // Use the original description length (without ANSI codes) for accurate padding
         let desc_len = description.len();
-        let padding = if desc_len < 50 {
-            (50 - desc_len).max(0)
+        // Always ensure at least 2 spaces of padding, and pad shorter descriptions to max_len
+        let padding = if desc_len < max_len {
+            max_len - desc_len
         } else {
+            // Even for the longest description, add minimum padding
             2
         };
 
@@ -66,9 +69,28 @@ impl Printer {
         }
     }
 
-    pub fn label_value(label: &str, value: &str) {
-        // Match Python: f"\t{label_color}{label}\t :: {value}{Colors.NORMAL}"
-        println!("\t{}\t :: {}", label.magenta().bold(), value);
+    pub fn label_value_padded(label: &str, value: &str, max_label_len: usize) {
+        // Same as label_value but with consistent padding to align all "::"
+        let label_len = label.len();
+        let padding = if label_len < max_label_len {
+            max_label_len - label_len
+        } else {
+            0
+        };
+        
+        println!("\t{}{}\t :: {}", label.magenta().bold(), " ".repeat(padding), value);
+    }
+
+    pub fn label_value_colored(label: &str, value: &str, label_color: &colored::ColoredString, max_label_len: usize) {
+        // Same format as label_value_padded but with custom label color
+        let label_len = label.len();
+        let padding = if label_len < max_label_len {
+            max_label_len - label_len
+        } else {
+            0
+        };
+        
+        println!("\t{}{}\t :: {}", label_color, " ".repeat(padding), value.green());
     }
 
     pub fn directory_item(number: u8, name: &str, path: &std::path::Path) {

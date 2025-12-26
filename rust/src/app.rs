@@ -59,14 +59,21 @@ impl MalScraper {
             println!("{}", display_line.cyan().bold());
         }
 
-        Printer::label_value("Tool", "malScraper");
-        Printer::label_value("Author", "Ryan Monaghan");
-        Printer::label_value("Bluesky", "https://bsky.app/profile/rynmon.ie");
-        Printer::label_value("Website", "https://rynmon.ie");
-        Printer::label_value("Github", "https://github.com/rynmon/malScraper");
-        Printer::label_value("Branch", "Stable");
-        Printer::label_value("Version", &format!("{} (Rust)", CURRENT_VERSION));
-        println!("\t{}\t :: {}", "Tab Completion".cyan().normal(), "Enabled (Rust)".green().normal());
+        // Calculate max label length for consistent padding
+        let labels = vec!["Tool", "Author", "Bluesky", "Website", "Github", "Branch", "Version", "Tab Completion"];
+        let max_label_len = labels.iter().map(|l| l.len()).max().unwrap_or(15);
+        
+        // Print all labels with consistent padding
+        Printer::label_value_padded("Tool", "malScraper", max_label_len);
+        Printer::label_value_padded("Author", "Ryan Monaghan", max_label_len);
+        Printer::label_value_padded("Bluesky", "https://bsky.app/profile/rynmon.ie", max_label_len);
+        Printer::label_value_padded("Website", "https://rynmon.ie", max_label_len);
+        Printer::label_value_padded("Github", "https://github.com/rynmon/malScraper", max_label_len);
+        Printer::label_value_padded("Branch", "Stable", max_label_len);
+        Printer::label_value_padded("Version", &format!("{} (Rust)", CURRENT_VERSION), max_label_len);
+        // Tab Completion uses cyan instead of magenta to match Python version
+        let tab_completion_label = "Tab Completion".cyan();
+        Printer::label_value_colored("Tab Completion", "Enabled (Rust)", &tab_completion_label, max_label_len);
         println!();
     }
 
@@ -94,8 +101,17 @@ impl MalScraper {
             ),
         ];
 
+        // Find the maximum description length for alignment
+        // Add a small buffer to ensure consistent alignment
+        let max_desc_len = menu_items
+            .iter()
+            .map(|(desc, _, _)| desc.len())
+            .max()
+            .unwrap_or(50)
+            + 2; // Add 2 extra spaces for better visual alignment
+
         for (desc, cmds, highlight) in menu_items {
-            Printer::menu_item(desc, cmds, highlight);
+            Printer::menu_item_aligned(desc, cmds, highlight, max_desc_len);
         }
 
         println!();

@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simple, clean design: Magnifying glass with "M" -->
+  <defs>
+    <linearGradient id="simpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="url(#simpleGrad)"/>
+  
+  <!-- Magnifying glass -->
+  <circle cx="220" cy="220" r="90" fill="none" stroke="#60a5fa" stroke-width="28"/>
+  <line x1="290" y1="290" x2="360" y2="360" stroke="#60a5fa" stroke-width="28" stroke-linecap="round"/>
+  
+  <!-- Simple "M" inside -->
+  <path d="M 180 200 L 180 300 L 220 250 L 260 300 L 260 200" 
+        fill="none" stroke="#60a5fa" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+

@@ -1,4 +1,0 @@
-requests
-pyfiglet
-prompt_toolkit
-packaging

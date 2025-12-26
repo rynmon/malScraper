@@ -27,3 +27,6 @@ Thumbs.db
 
 # Build artifacts
 *.log
+
+# Website files (not part of this repository)
+rynmon.ie/

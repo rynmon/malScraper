@@ -37,20 +37,10 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
-      - name: Install cross (for ARM64 Linux)
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
-        run: |
-          cargo install cross --git https://github.com/cross-rs/cross
-          rustup target add aarch64-unknown-linux-gnu
-
       - name: Build
         run: |
           cd rust
-          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
-            cross build --release --target ${{ matrix.target }}
-          else
-            cargo build --release --target ${{ matrix.target }}
-          fi
+          cargo build --release --target ${{ matrix.target }}
 
       - name: Strip binary (Unix)
         if: runner.os != 'Windows'
@@ -67,7 +57,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           cd rust/target/${{ matrix.target }}/release
-          Compress-Archive -Path malscraper.exe -DestinationPath ../../../../${{ matrix.artifact_name }}.zip -Force
+          7z a ../../../../${{ matrix.artifact_name }}.zip malscraper.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -14,6 +14,9 @@
 - **Memory Safe**: Rust's ownership system prevents common bugs
 - **All Original Features**: Maintains compatibility with the Python version
 
+### v2.0.2 New Features
+- **Updated Application Icon** - Refreshed icon design for better visual identity
+
 ### v2.0.1 New Features
 - **Automatic Update Installation** - Download and install updates directly from within the application with platform detection
 

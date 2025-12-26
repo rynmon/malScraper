@@ -6,12 +6,25 @@
 
 ## Features
 
+### Core Features
 - **High Performance**: Written in Rust for maximum speed and efficiency
 - **Cross-Platform**: Works on Windows, macOS, and Linux
 - **Single Binary**: No runtime dependencies required after compilation
 - **Async Downloads**: Fast parallel downloads with progress indicators
 - **Memory Safe**: Rust's ownership system prevents common bugs
 - **All Original Features**: Maintains compatibility with the Python version
+
+### v2.0.0 New Features
+- **Statistics Dashboard** - Comprehensive analytics and metrics
+- **Search & Filter** - Search across reports with regex support
+- **Export Formats** - Firewall rules, SIEM formats (JSON/CSV), STIX/TAXII
+- **Deduplication** - Remove duplicates and create unified master lists
+- **Historical Tracking** - Track changes over time
+- **Validation** - Validate IPs, domains, and check DNS
+- **Custom Feeds** - Add your own feed URLs
+- **Non-Interactive Mode** - CLI arguments for automation
+- **Report Comparison** - Compare two reports side-by-side
+- **Whitelist Management** - Exclude false positives
 
 ## Building
 
@@ -65,8 +78,11 @@ cargo build --release
 
 ## Usage
 
-The Rust version maintains the same command interface as the Python version:
+### Interactive Mode
 
+The Rust version maintains the same command interface as the Python version, plus many new commands:
+
+**Basic Commands:**
 - `FULL` or `FULL-SCAN` - Perform a complete scan of all feeds
 - `QUICK` or `QUICK-SCAN` - Quick scan of most recent 100 payload domains
 - `HELP` - Show help menu
@@ -74,6 +90,38 @@ The Rust version maintains the same command interface as the Python version:
 - `OPEN` or `REOPEN` - Open a previously downloaded report
 - `UPDATE` or `INSTALL` - Check for and install updates
 - `QUIT` or `EXIT` - Exit the application
+
+**Analysis Commands:**
+- `STATS` - View statistics dashboard
+- `SEARCH <term>` - Search for terms across reports
+- `FILTER [feed_type] [pattern]` - Filter reports
+- `COMPARE <report1> <report2>` - Compare two reports
+- `DIFF` or `CHANGES` - Compare with previous scan
+
+**Data Management:**
+- `DEDUPE` or `UNIQUE` - Deduplicate reports
+- `VALIDATE <report>` - Validate indicators
+- `WHITELIST` - Manage whitelist (ADD, LIST, REMOVE)
+- `FEEDS` - Manage custom feeds (ADD, LIST, REMOVE)
+
+**Export:**
+- `EXPORT <format> <report>` - Export to various formats
+
+### Non-Interactive Mode (CLI)
+
+```bash
+# Quick scan
+malscraper quick-scan --output-dir ./reports
+
+# Export
+malscraper export iptables payload
+
+# Search
+malscraper search malware.com
+
+# See all commands
+malscraper --help
+```
 
 ## Performance Improvements
 
@@ -115,13 +163,24 @@ rust/
 ├── src/
 │   ├── main.rs         # Entry point
 │   ├── app.rs          # Main application logic
-│   ├── config.rs       # Configuration and constants
-│   ├── download.rs     # Download functionality
-│   ├── file_ops.rs     # File operations (processing, zipping, etc.)
-│   ├── printer.rs      # Terminal output formatting
-│   ├── update.rs       # Update checking
-│   └── utils.rs        # Utility functions
-└── README.md           # This file
+│   ├── cli.rs           # CLI argument parsing
+│   ├── config.rs        # Configuration and constants
+│   ├── download.rs      # Download functionality
+│   ├── file_ops.rs      # File operations (processing, zipping, etc.)
+│   ├── printer.rs       # Terminal output formatting
+│   ├── update.rs        # Update checking
+│   ├── utils.rs         # Utility functions
+│   ├── stats.rs         # Statistics dashboard
+│   ├── search.rs        # Search and filter functionality
+│   ├── export.rs        # Export to various formats
+│   ├── dedupe.rs        # Deduplication
+│   ├── history.rs       # Historical tracking
+│   ├── validate.rs      # Validation
+│   ├── custom_feeds.rs  # Custom feed management
+│   ├── compare.rs       # Report comparison
+│   ├── whitelist.rs     # Whitelist management
+│   └── completer.rs     # Tab completion
+└── README.md            # This file
 ```
 
 ### Running Tests

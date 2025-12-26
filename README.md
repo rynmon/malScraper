@@ -1,4 +1,4 @@
-# malScraper v1.5.5
+# malScraper v2.0.0
 
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -41,6 +41,7 @@ The binary will be at `rust/target/release/malscraper` (or `.exe` on Windows).
 
 ## ✨ Features
 
+### Core Features
 - **High Performance**: 3-5x faster than Python version
 - **Single Binary**: No runtime dependencies required
 - **Cross-Platform**: Windows, macOS, and Linux
@@ -48,6 +49,34 @@ The binary will be at `rust/target/release/malscraper` (or `.exe` on Windows).
 - **Async Downloads**: Fast parallel downloads with progress bars
 - **Memory Safe**: Rust's ownership system prevents common bugs
 - **Auto-Updates**: Built-in update checking via GitHub Releases
+
+### New in v2.0.0 🎉
+
+#### Analysis & Intelligence
+- **Statistics Dashboard** (`STATS`) - View comprehensive metrics and analytics for all reports
+- **Search & Filter** (`SEARCH`, `FILTER`) - Search across reports with regex support
+- **Report Comparison** (`COMPARE`) - Compare two reports side-by-side to see differences
+- **Historical Tracking** (`DIFF`, `CHANGES`) - Track changes over time and identify new indicators
+
+#### Data Management
+- **Deduplication** (`DEDUPE`, `UNIQUE`) - Remove duplicates across all reports and create unified master lists
+- **Validation** (`VALIDATE`) - Validate IP addresses and domains, check if domains are still active
+- **Whitelist Management** (`WHITELIST`) - Whitelist false positives and exclude known-good indicators
+
+#### Export & Integration
+- **Export Formats** (`EXPORT`) - Export to multiple formats:
+  - Firewall rules: iptables, Windows Firewall, pfSense
+  - SIEM formats: JSON, CSV with metadata
+  - Threat intelligence: STIX/TAXII
+
+#### Customization & Automation
+- **Custom Feeds** (`FEEDS`) - Add, list, and remove your own custom feed URLs
+- **Non-Interactive Mode** - CLI arguments for automation and scripting
+  ```bash
+  malscraper quick-scan --output-dir ./reports
+  malscraper export iptables payload
+  malscraper search malware.com
+  ```
 
 ## 📋 Usage
 
@@ -57,15 +86,65 @@ The binary will be at `rust/target/release/malscraper` (or `.exe` on Windows).
    ```
 
 2. Available commands:
+
+   **Basic Operations:**
    - `FULL` or `FULL-SCAN` - Complete scan of all feeds
    - `QUICK` or `QUICK-SCAN` - Quick scan (most recent 100 domains)
-   - `HELP` - Show help menu
-   - `TUTORIAL` - Show tutorial
    - `OPEN` or `REOPEN` - Open a previously downloaded report
    - `UPDATE` - Check for and install updates
+   - `HELP` - Show help menu
+   - `TUTORIAL` - Show tutorial
    - `QUIT` or `EXIT` - Exit the application
 
+   **Analysis Features:**
+   - `STATS` - View statistics dashboard
+   - `SEARCH <term>` - Search for specific terms across reports
+   - `FILTER [feed_type] [pattern]` - Filter reports by criteria
+   - `COMPARE <report1> <report2>` - Compare two reports
+   - `DIFF` or `CHANGES` - Compare current scan with previous scan
+
+   **Data Management:**
+   - `DEDUPE` or `UNIQUE` - Deduplicate all reports into master list
+   - `VALIDATE <report>` - Validate IP addresses and domains
+   - `WHITELIST ADD <indicator> [reason]` - Add to whitelist
+   - `WHITELIST LIST` - List all whitelisted indicators
+   - `WHITELIST REMOVE <indicator>` - Remove from whitelist
+
+   **Export & Integration:**
+   - `EXPORT <format> <report>` - Export to firewall/SIEM formats
+     - Formats: `iptables`, `windows`, `pfsense`, `json`, `csv`, `stix`, `taxii`
+     - Reports: `payload`, `amp`, `c2`, `hex`, `haus`, `phish`, `top100`
+
+   **Customization:**
+   - `FEEDS ADD <url> [name] [description]` - Add custom feed
+   - `FEEDS LIST` - List all custom feeds
+   - `FEEDS REMOVE <name_or_url>` - Remove custom feed
+
 3. Press `TAB` for command auto-completion!
+
+### Non-Interactive Mode (CLI)
+
+For automation and scripting, use CLI arguments:
+
+```bash
+# Quick scan with custom output directory
+malscraper quick-scan --output-dir ./reports
+
+# Full scan
+malscraper full-scan --output-dir ./reports
+
+# Export to iptables format
+malscraper export iptables payload
+
+# Search across reports
+malscraper search malware.com
+
+# View statistics
+malscraper stats
+
+# See all available commands
+malscraper --help
+```
 
 ## 📁 File Locations
 

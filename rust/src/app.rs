@@ -498,8 +498,24 @@ impl MalScraper {
                 self.reopen()?;
             }
             "INSTALL" | "UPDATE" => {
-                // Update handling would go here
-                Printer::info("Update functionality - coming soon");
+                // Force update check
+                match self
+                    .update_checker
+                    .check_for_updates(CURRENT_VERSION, true)
+                    .await
+                {
+                    Ok(Some(_update_info)) => {
+                        Printer::info("Update available! Please download the latest release from:");
+                        Printer::info("https://github.com/rynmon/malScraper/releases");
+                        Printer::warning("Automatic update installation coming in a future release.");
+                    }
+                    Ok(None) => {
+                        Printer::success("You are running the latest version!");
+                    }
+                    Err(e) => {
+                        Printer::error(&format!("Failed to check for updates: {}", e));
+                    }
+                }
             }
             _ => {
                 clear_screen();
@@ -517,14 +533,16 @@ impl MalScraper {
         
         self.paths.ensure_directories()?;
 
-        // Check for updates
-        if let Ok(Some(_update_info)) = self
-            .update_checker
-            .check_for_updates(CURRENT_VERSION, false)
-            .await
-        {
-            // Update installation would go here
-            Printer::info("Update available - installation coming soon");
+        // Check for updates (silently, only once per day)
+        if self.update_checker.should_check_for_updates() {
+            if let Ok(Some(_update_info)) = self
+                .update_checker
+                .check_for_updates(CURRENT_VERSION, false)
+                .await
+            {
+                // Update was detected and user was prompted
+                // The update checker handles the prompt and display
+            }
         }
 
         self.show_home();

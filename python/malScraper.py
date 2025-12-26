@@ -187,7 +187,7 @@ if UPDATE_FLAG.exists():
             pass
 
 # Current version - Update this manually when releasing a new version
-CURRENT_VERSION = "1.4.7"
+CURRENT_VERSION = "1.4.8"
 
 # Splash-text for loading screens
 SPLASH_TEXTS = [

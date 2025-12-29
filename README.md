@@ -5,9 +5,9 @@
 
 **Cross-platform tool to scrape malware domains, IOCs, and C2 IPs from various feeds for easy blacklisting.**
 
-> ⚠️ **Note**: The Python and Bash versions have been deprecated. This project now uses Rust exclusively for better performance, security, and distribution.
+> **Note**: The Python and Bash versions have been deprecated. This project now uses Rust exclusively for better performance, security, and distribution.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Download Pre-built Binaries
 
@@ -39,7 +39,7 @@ cargo build --release
 
 The binary will be at `rust/target/release/malscraper` (or `.exe` on Windows).
 
-## ✨ Features
+## Features
 
 ### Core Features
 - **High Performance**: 3-5x faster than Python version
@@ -79,7 +79,7 @@ The binary will be at `rust/target/release/malscraper` (or `.exe` on Windows).
   ```
 - **Automatic Updates** (`UPDATE`, `INSTALL`) - Automatically download and install updates with platform detection
 
-## 📋 Usage
+## Usage
 
 1. Run the tool:
    ```bash
@@ -147,20 +147,20 @@ malscraper stats
 malscraper --help
 ```
 
-## 📁 File Locations
+## File Locations
 
 Reports are saved to:
 - **Windows**: `%USERPROFILE%\Documents\malScraper\`
 - **macOS/Linux**: `~/Desktop/malScraper/`
 
-## ⚠️ Antivirus Warning
+## Antivirus Warning
 
 Some reports (especially `PayloadReport.txt`) may be flagged by antivirus software because they contain known malware indicators. These files are for research and defensive use only.
 
 - You'll be prompted to obfuscate or zip the payload report
 - Consider adding an exclusion for the report directory
 
-## 🔄 Migration from Python/Bash Versions
+## Migration from Python/Bash Versions
 
 If you were using the Python or Bash versions:
 
@@ -169,7 +169,7 @@ If you were using the Python or Bash versions:
 3. **Commands are identical** - no learning curve!
 4. **Better performance** - downloads and processing are faster
 
-## 🛠️ Development
+## Development
 
 ```bash
 # Clone the repository
@@ -189,7 +189,7 @@ cargo fmt
 cargo clippy
 ```
 
-## 📊 Performance Comparison
+## Performance Comparison
 
 | Metric | Python | Rust |
 |--------|--------|------|
@@ -199,30 +199,16 @@ cargo clippy
 | Binary Size | N/A | ~5-10MB |
 | Dependencies | Python + packages | Single binary |
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to:
 - Open issues for bugs or feature requests
 - Submit pull requests
 - Improve documentation
 
-## 📝 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-## 👤 Author
-
-**Ryan Monaghan** ([@rynmonaghan](https://bsky.app/profile/rynmon.ie))
-
-- Website: https://rynmon.ie
-- GitHub: [@rynmon](https://github.com/rynmon)
-- Bluesky: [@rynmon.ie](https://bsky.app/profile/rynmon.ie)
-
-## 🙏 Acknowledgments
-
-- All the security researchers and organizations providing the threat intelligence feeds
-- The Rust community for excellent tooling and libraries
-
 ---
 
 **Note**: Python and Bash versions are deprecated. Please use the Rust version for the best experience and continued support.

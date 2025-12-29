@@ -50,7 +50,7 @@ The binary will be at `rust/target/release/malscraper` (or `.exe` on Windows).
 - **Memory Safe**: Rust's ownership system prevents common bugs
 - **Auto-Updates**: Built-in update checking via GitHub Releases
 
-### New in v2.0.0 🎉
+### New in v2.0.0
 
 #### Analysis & Intelligence
 - **Statistics Dashboard** (`STATS`) - View comprehensive metrics and analytics for all reports

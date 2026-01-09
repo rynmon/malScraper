@@ -2,7 +2,6 @@ use crate::config::{RELEASE_URL, UPDATE_CHECK_TIMEOUT_SECS, Paths, UpdateInfo};
 use crate::printer::Printer;
 use crate::utils::is_newer_version;
 use anyhow::{Context, Result};
-use colored::Colorize;
 use serde_json::Value;
 use std::fs;
 use std::io::Write;
@@ -110,7 +109,8 @@ impl UpdateChecker {
             return Ok(None);
         }
 
-        println!("\n{}", "New version available!".yellow().bold());
+        println!();
+        Printer::warning("New version available!");
         Printer::info(&format!("Current version: {}", current_version));
         Printer::info(&format!("Latest version: {}", latest_version));
 
@@ -123,23 +123,41 @@ impl UpdateChecker {
 
         // Display release notes
         if let Some(body) = release_data.get("body").and_then(|b| b.as_str()) {
-            Printer::info("\nRelease notes:");
-            for line in body.lines().take(5) {
+            Printer::info("Release notes:");
+            // Clean up markdown formatting for better display
+            let mut note_lines = Vec::new();
+            for line in body.lines().take(10) {
+                let cleaned = line.trim();
+                if !cleaned.is_empty() && !cleaned.starts_with('#') {
+                    note_lines.push(cleaned);
+                }
+            }
+            for line in note_lines.iter().take(5) {
                 println!("  {}", line);
             }
             if body.lines().count() > 5 {
-                Printer::warning("  ...and more");
+                Printer::info("  ...and more");
             }
         }
 
         // Prompt user
-        use dialoguer::Confirm;
-        if Confirm::new()
-            .with_prompt("Would you like to update now?")
-            .default(true)
-            .interact()
-            .unwrap_or(false)
-        {
+        use dialoguer::Input;
+        use std::io::Write;
+        
+        // Flush stdout to ensure prompt is visible
+        std::io::stdout().flush().ok();
+        
+        let response: String = Input::new()
+            .with_prompt("Would you like to update now? [Y/n]")
+            .default("Y".to_string())
+            .interact_text()
+            .unwrap_or_else(|_| "n".to_string());
+        
+        let should_update = response.trim().is_empty() 
+            || response.trim().eq_ignore_ascii_case("y") 
+            || response.trim().eq_ignore_ascii_case("yes");
+        
+        if should_update {
             self.update_check_timestamp();
             // Find the correct binary for this platform
             let platform_binary = self.find_platform_binary(&assets)?;

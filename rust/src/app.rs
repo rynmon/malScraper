@@ -1269,13 +1269,26 @@ impl MalScraper {
 
         // Check for updates (silently, only once per day)
         if self.update_checker.should_check_for_updates() {
-            if let Ok(Some(_update_info)) = self
+            if let Ok(Some(update_info)) = self
                 .update_checker
                 .check_for_updates(CURRENT_VERSION, false)
                 .await
             {
-                // Update was detected and user was prompted
-                // The update checker handles the prompt and display
+                // User confirmed they want to update, install it
+                match self.update_checker.install_update(update_info).await {
+                    Ok(()) => {
+                        Printer::info("\nUpdate installed! The application will now exit.");
+                        Printer::info("Please restart to use the new version.");
+                        std::thread::sleep(std::time::Duration::from_secs(2));
+                        std::process::exit(0);
+                    }
+                    Err(e) => {
+                        Printer::error(&format!("Failed to install update: {}", e));
+                        Printer::info("You can manually download from:");
+                        Printer::info("https://github.com/rynmon/malScraper/releases");
+                        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+                    }
+                }
             }
         }
 

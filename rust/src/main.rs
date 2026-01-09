@@ -29,13 +29,13 @@ async fn main() {
     // while still functioning as a console application
     #[cfg(target_os = "windows")]
     {
-        use winapi::um::consoleapi::AllocConsole;
+        use winapi::um::consoleapi::{AllocConsole, GetConsoleMode, SetConsoleMode};
         use winapi::um::fileapi::{CreateFileA, OPEN_EXISTING};
         use winapi::um::handleapi::INVALID_HANDLE_VALUE;
         use winapi::um::winnt::{FILE_SHARE_WRITE, GENERIC_READ, GENERIC_WRITE};
         use winapi::um::processenv::{SetStdHandle, GetStdHandle};
         use winapi::um::winbase::{STD_OUTPUT_HANDLE, STD_INPUT_HANDLE, STD_ERROR_HANDLE};
-        use winapi::um::wincon::{SetConsoleScreenBufferSize, COORD, SMALL_RECT, SetConsoleWindowInfo};
+        use winapi::um::wincon::{SetConsoleScreenBufferSize, COORD, SMALL_RECT, SetConsoleWindowInfo, ENABLE_VIRTUAL_TERMINAL_PROCESSING};
         use std::ffi::CString;
         
         unsafe {
@@ -86,6 +86,13 @@ async fn main() {
                 // Resize console window to ensure all menu items are visible
                 let console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
                 if console_handle != INVALID_HANDLE_VALUE {
+                    // Enable ANSI color support on Windows 10+
+                    let mut mode: u32 = 0;
+                    if GetConsoleMode(console_handle, &mut mode) != 0 {
+                        mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+                        SetConsoleMode(console_handle, mode);
+                    }
+                    
                     // Set buffer size (width x height in characters)
                     // Use a larger buffer to accommodate all menu items
                     let buffer_size = COORD {

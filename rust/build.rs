@@ -6,12 +6,17 @@ fn main() {
         let manifest_path = std::path::Path::new("assets/app.manifest");
         
         if icon_path.exists() {
-            // Create resource file content
-            let mut rc_content = String::from("1 ICON \"icon.ico\"\n");
+            // Get absolute paths for the resource file
+            let manifest = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+            let icon_full_path = std::path::Path::new(&manifest).join("assets").join("icon.ico");
+            let manifest_full_path = std::path::Path::new(&manifest).join("assets").join("app.manifest");
+            
+            // Create resource file content with absolute paths
+            let mut rc_content = format!("1 ICON \"{}\"\n", icon_full_path.to_string_lossy().replace('\\', "/"));
             
             // Add manifest if it exists (RT_MANIFEST = 24)
             if manifest_path.exists() {
-                rc_content.push_str("1 24 \"app.manifest\"\n");
+                rc_content.push_str(&format!("1 24 \"{}\"\n", manifest_full_path.to_string_lossy().replace('\\', "/")));
             }
             
             // Write temporary resource file in assets directory

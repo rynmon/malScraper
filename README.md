@@ -1,5 +1,10 @@
 # malScraper v2.0.2
 
+[![GitHub stars](https://img.shields.io/github/stars/rynmon/malScraper?style=flat-square&logo=github)](https://github.com/rynmon/malScraper/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/rynmon/malScraper?style=flat-square&logo=github)](https://github.com/rynmon/malScraper/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/rynmon/malScraper?style=flat-square&logo=github)](https://github.com/rynmon/malScraper/issues)
+[![GitHub release](https://img.shields.io/github/v/release/rynmon/malScraper?style=flat-square&logo=github)](https://github.com/rynmon/malScraper/releases)
+[![GitHub license](https://img.shields.io/github/license/rynmon/malScraper?style=flat-square&logo=github)](https://github.com/rynmon/malScraper/blob/main/LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

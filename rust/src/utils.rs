@@ -1,4 +1,4 @@
-use anyhow::Result;
+﻿use anyhow::Result;
 use semver::Version;
 use std::path::Path;
 
@@ -74,11 +74,11 @@ pub fn get_random_splash() -> &'static str {
     use rand::seq::SliceRandom;
     use rand::thread_rng;
     let splashes = [
-        "🔎 Generating list...",
-        "🔎 Scraping data...",
-        "🔎 Spinning web...",
-        "🔎 Hunting threats...",
-        "🔎 Collecting indicators...",
+        "ðŸ”Ž Generating list...",
+        "ðŸ”Ž Scraping data...",
+        "ðŸ”Ž Spinning web...",
+        "ðŸ”Ž Hunting threats...",
+        "ðŸ”Ž Collecting indicators...",
     ];
     splashes.choose(&mut thread_rng()).unwrap_or(&splashes[0])
 }
@@ -87,11 +87,11 @@ pub fn get_random_exit_message() -> &'static str {
     use rand::seq::SliceRandom;
     use rand::thread_rng;
     let messages = [
-        "Bye... 👋😢",
-        "Cya... 👋😢",
-        "Byeeeeeeeeeeee... 👋😢",
-        "Until next time... 👋",
-        "Happy hunting! 👋",
+        "Bye... ðŸ‘‹ðŸ˜¢",
+        "Cya... ðŸ‘‹ðŸ˜¢",
+        "Byeeeeeeeeeeee... ðŸ‘‹ðŸ˜¢",
+        "Until next time... ðŸ‘‹",
+        "Happy hunting! ðŸ‘‹",
     ];
     messages.choose(&mut thread_rng()).unwrap_or(&messages[0])
 }
@@ -118,3 +118,35 @@ pub fn set_console_title(title: &str) {
     }
 }
 
+pub fn scroll_console_to_top() {
+    #[cfg(target_os = "windows")]
+    {
+        use winapi::um::processenv::GetStdHandle;
+        use winapi::um::winbase::STD_OUTPUT_HANDLE;
+        use winapi::um::wincon::{SetConsoleWindowInfo, GetConsoleScreenBufferInfo, COORD, SMALL_RECT};
+        use winapi::um::handleapi::INVALID_HANDLE_VALUE;
+        
+        unsafe {
+            let console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+            if console_handle != INVALID_HANDLE_VALUE {
+                // Get current buffer info
+                let mut buffer_info: winapi::um::wincon::CONSOLE_SCREEN_BUFFER_INFO = std::mem::zeroed();
+                if GetConsoleScreenBufferInfo(console_handle, &mut buffer_info) != 0 {
+                    // Set window to show from the top (Y = 0)
+                    let window_rect = SMALL_RECT {
+                        Left: 0,
+                        Top: 0,
+                        Right: buffer_info.dwSize.X - 1,
+                        Bottom: (buffer_info.srWindow.Bottom - buffer_info.srWindow.Top) as i16,
+                    };
+                    SetConsoleWindowInfo(console_handle, 1, &window_rect);
+                }
+            }
+        }
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
+        // No-op on non-Windows systems
+    }
+}

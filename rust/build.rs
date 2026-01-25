@@ -28,9 +28,9 @@ fn main() {
             }
         }
         
-        // Set Windows subsystem to "Windows" instead of "Console"
-        // This makes the taskbar show our custom icon instead of the console host icon
-        println!("cargo:rustc-link-arg=/SUBSYSTEM:WINDOWS");
-        println!("cargo:rustc-link-arg=/ENTRY:mainCRTStartup");
+        // Use CONSOLE subsystem to enable Windows Terminal support
+        // The custom icon will still be embedded and shown in the taskbar
+        // Windows Terminal will be used automatically if set as default terminal
+        println!("cargo:rustc-link-arg=/SUBSYSTEM:CONSOLE");
     }
 }

@@ -1,15 +1,15 @@
 # malScraper Icon Assets
 
-## Icon Designs
+## Icon Design
 
-Multiple minimalist icon options:
+**icon.svg** - Virus icon (black and cyan) - Perfect for a malware scraper tool!
 
-1. **icon.svg** - Simple magnifying glass with network lines (blue gradient)
-2. **icon-alt1.svg** - Shield with "M" letter (green gradient)
-3. **icon-alt2.svg** - Network/web pattern (purple gradient)
-4. **icon-alt3.svg** - Magnifying glass with "M" (dark blue/gray)
+The icon features a stylized virus design with a central circle and radiating spikes, using black and cyan (#2ca9bc) colors. This design is ideal for a security tool that deals with malware indicators.
 
-All designs are minimalist and clean, suitable for a professional security tool.
+### Alternative Icons
+- **icon-alt1.svg** - Shield with "M" letter (green gradient)
+- **icon-alt2.svg** - Network/web pattern (purple gradient)
+- **icon-alt3.svg** - Magnifying glass with "M" (dark blue/gray)
 
 ## Converting to Icon Formats
 

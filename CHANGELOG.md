@@ -2,6 +2,12 @@
 
 All notable changes to malScraper will be documented in this file.
 
+## [2.0.7] - 2025-01-XX
+
+### Changed
+- Updated application icon to new virus-themed design (black and cyan)
+- Icon now appears in File Explorer, Task Manager, taskbar, and application shortcuts
+
 ## [2.0.6] - 2025-01-XX
 
 ### Added

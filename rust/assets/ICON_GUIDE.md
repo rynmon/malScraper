@@ -1,7 +1,7 @@
 # malScraper Icon - Quick Conversion Guide
 
 ## Current Icon
-**icon.svg** - Simple magnifying glass with network lines (blue gradient)
+**icon.svg** - Virus icon (black and cyan) - perfect for malware scraper tool
 
 ## Quick Conversion Methods
 

@@ -2,6 +2,23 @@
 
 All notable changes to malScraper will be documented in this file.
 
+## [2.0.6] - 2025-01-XX
+
+### Added
+- Windows Terminal support - application now uses Windows Terminal when set as default
+- Automatic console window sizing (50 lines height, 120 width) for better content visibility
+- Console viewport scrolling to ensure banner is visible on startup
+- Window icon setting for traditional console windows (title bar icon)
+
+### Changed
+- Switched from WINDOWS subsystem to CONSOLE subsystem for better Windows Terminal compatibility
+- Improved window initialization to show all content without scrolling
+- Better ANSI/VT100 color support for Windows Terminal
+
+### Fixed
+- Fixed console window opening with proper size to display all menu items
+- Fixed banner and labels being scrolled off-screen on startup
+
 ## [1.5.6] - 2025-01-XX
 
 ### Fixed

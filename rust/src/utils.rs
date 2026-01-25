@@ -1,4 +1,4 @@
-﻿use anyhow::Result;
+use anyhow::Result;
 use semver::Version;
 use std::path::Path;
 
@@ -74,11 +74,11 @@ pub fn get_random_splash() -> &'static str {
     use rand::seq::SliceRandom;
     use rand::thread_rng;
     let splashes = [
-        "ðŸ”Ž Generating list...",
-        "ðŸ”Ž Scraping data...",
-        "ðŸ”Ž Spinning web...",
-        "ðŸ”Ž Hunting threats...",
-        "ðŸ”Ž Collecting indicators...",
+        "🔎 Generating list...",
+        "🔎 Scraping data...",
+        "🔎 Spinning web...",
+        "🔎 Hunting threats...",
+        "🔎 Collecting indicators...",
     ];
     splashes.choose(&mut thread_rng()).unwrap_or(&splashes[0])
 }
@@ -87,11 +87,11 @@ pub fn get_random_exit_message() -> &'static str {
     use rand::seq::SliceRandom;
     use rand::thread_rng;
     let messages = [
-        "Bye... ðŸ‘‹ðŸ˜¢",
-        "Cya... ðŸ‘‹ðŸ˜¢",
-        "Byeeeeeeeeeeee... ðŸ‘‹ðŸ˜¢",
-        "Until next time... ðŸ‘‹",
-        "Happy hunting! ðŸ‘‹",
+        "Bye... 👋😢",
+        "Cya... 👋😢",
+        "Byeeeeeeeeeeee... 👋😢",
+        "Until next time... 👋",
+        "Happy hunting! 👋",
     ];
     messages.choose(&mut thread_rng()).unwrap_or(&messages[0])
 }
@@ -143,10 +143,5 @@ pub fn scroll_console_to_top() {
                 }
             }
         }
-    }
-    
-    #[cfg(not(target_os = "windows"))]
-    {
-        // No-op on non-Windows systems
     }
 }

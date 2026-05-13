@@ -1,0 +1,41 @@
+---
+description: Never attribute commits or PRs to Cursor / AI agents in this repo
+alwaysApply: true
+---
+
+# No AI Co-Author Attribution
+
+When making git commits or opening pull requests in this repository, the
+agent must not attribute the work to Cursor or any other AI tool.
+
+## Rules
+
+- Do **not** add a `Co-authored-by: Cursor <cursoragent@cursor.com>` (or any
+  other AI/agent) trailer to commit messages.
+- Do **not** add a `Made with Cursor` line, a `🤖 Generated with...`
+  footer, or any other AI-attribution marker to commits or PR descriptions.
+- Commit messages should contain only the substantive change description.
+
+## Note on enforcement
+
+The `Co-authored-by:` trailer can be appended automatically by the Cursor
+shell tool wrapper itself (it injects `--trailer` into `git commit`),
+which is outside the agent's direct control. To make sure it's actually
+disabled at the tool level:
+
+1. **IDE**: turn off **Cursor Settings → Agent → Attribution → Commit
+   Attribution** (and PR Attribution) at the user level.
+2. **CLI**: set `attribution.attributeCommitsToAgent: false` and
+   `attribution.attributePRsToAgent: false` in `~/.cursor/cli-config.json`.
+
+If a commit needs to be made while attribution is still on at the tool
+level, fall back to the `git commit-tree` plumbing path:
+
+```bash
+TREE=$(git rev-parse HEAD^{tree})
+PARENT=$(git rev-parse HEAD^)
+NEW=$(printf '%s' "$MSG" | git commit-tree "$TREE" -p "$PARENT")
+git update-ref refs/heads/$(git symbolic-ref --short HEAD) "$NEW"
+```
+
+`git commit-tree` is plumbing and does not have the trailer flag injected.

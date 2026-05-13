@@ -72,6 +72,14 @@ jobs:
         working-directory: rust/target/${{ matrix.target }}/release
         run: 7z a ${{ github.workspace }}/${{ matrix.artifact_name }}.zip malscraper.exe
 
+      - name: Build .app bundle (macOS)
+        if: runner.os == 'macOS'
+        working-directory: rust
+        run: |
+          ./scripts/bundle-macos.sh "target/${{ matrix.target }}/release/malscraper"
+          tar czf "${{ github.workspace }}/${{ matrix.artifact_name }}.app.tar.gz" \
+              -C dist malScraper.app
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -79,6 +87,7 @@ jobs:
           path: |
             ${{ matrix.artifact_name }}.tar.gz
             ${{ matrix.artifact_name }}.zip
+            ${{ matrix.artifact_name }}.app.tar.gz
           if-no-files-found: error
 
   release:

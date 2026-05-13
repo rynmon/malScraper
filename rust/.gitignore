@@ -3,6 +3,9 @@
 **/*.rs.bk
 Cargo.lock
 
+# macOS .app bundle output from scripts/bundle-macos.sh
+/dist/
+
 # IDE files
 .idea/
 .vscode/

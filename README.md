@@ -25,6 +25,12 @@
 - Make executable: `chmod +x malscraper-*`
 - Run: `./malscraper-*`
 
+**macOS (as a real app):**
+- Download `malscraper-aarch64-apple-darwin.app.tar.gz` (Apple Silicon) or `malscraper-x86_64-apple-darwin.app.tar.gz` (Intel) from [Releases](https://github.com/rynmon/malScraper/releases)
+- Extract: `tar xzf malscraper-*.app.tar.gz`
+- Drag `malScraper.app` into `/Applications`
+- Double-click to launch (opens a Terminal window running malScraper). First launch may show a Gatekeeper warning since the app isn't notarized — right-click → Open to bypass.
+
 **Linux:**
 - Download `malscraper-x86_64-unknown-linux-gnu` or `malscraper-aarch64-unknown-linux-gnu` from [Releases](https://github.com/rynmon/malScraper/releases)
 - Make executable: `chmod +x malscraper-*`
@@ -66,6 +72,41 @@ You can also invoke cargo directly:
 rustup target add aarch64-apple-darwin
 cargo build --release --target aarch64-apple-darwin
 ```
+
+**macOS — build a `.app` bundle:**
+
+To produce a double-clickable `malScraper.app` (Finder/Launchpad/Spotlight launchable, opens a Terminal window running the TUI):
+
+```bash
+cd rust
+./build.sh --app             # native architecture
+./build.sh --app-arm         # aarch64-apple-darwin
+./build.sh --app-x86_64      # x86_64-apple-darwin
+./build.sh --app-universal   # universal (ARM + Intel)
+```
+
+The bundle is written to `rust/dist/malScraper.app`. The build script
+ad-hoc codesigns it so it runs on Apple Silicon, but the bundle is **not**
+notarized — first launch from Finder will show "Apple cannot verify…", which
+the user clears by right-click → Open once.
+
+To install:
+
+```bash
+cp -R rust/dist/malScraper.app /Applications/
+```
+
+To rebuild only the bundle from an already-built binary:
+
+```bash
+./scripts/bundle-macos.sh target/aarch64-apple-darwin/release/malscraper
+```
+
+The icon is generated from `rust/assets/icon.png` (the rynmon.ie brand
+asterisk on a dark rounded-rect background, 512×512 RGBA). The vector
+source lives at `rust/assets/icon.svg`. To upgrade Retina sharpness, drop
+a 1024×1024 RGBA PNG at `rust/assets/icon.png` and rebuild — the bundler
+prefers PNG over the legacy `icon.ico`.
 
 ## Features
 

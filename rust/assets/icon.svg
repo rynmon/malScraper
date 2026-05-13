@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="rynmon asterisk">
+  <!--
+    malScraper app icon. Reuses the rynmon.ie brand asterisk on a dark
+    rounded-rect background. Colors and corner radius are pinned (i.e. no
+    prefers-color-scheme media query) so the rasterized icon is identical
+    in any rendering context.
+    Corner radius 14.336 == 64 * 0.224 (macOS Big Sur+ icon corner ratio).
+  -->
+  <rect x="0" y="0" width="64" height="64" rx="14.336" ry="14.336" fill="#0a0a0c"/>
+  <g stroke="#fafafa" stroke-width="8" stroke-linecap="round" fill="none">
+    <line x1="32" y1="8"  x2="32" y2="56"/>
+    <line x1="11.22" y1="20" x2="52.78" y2="44"/>
+    <line x1="11.22" y1="44" x2="52.78" y2="20"/>
+  </g>
+</svg>

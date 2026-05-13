@@ -1,4 +1,4 @@
-# malScraper v2.0.7
+# malScraper v2.1.0
 
 [![GitHub stars](https://img.shields.io/github/stars/rynmon/malScraper?style=flat-square&logo=github)](https://github.com/rynmon/malScraper/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/rynmon/malScraper?style=flat-square&logo=github)](https://github.com/rynmon/malScraper/network/members)

@@ -2,6 +2,19 @@
 
 All notable changes to malScraper will be documented in this file.
 
+## [2.1.0] - 2026-05-13
+
+### Added
+- **macOS `.app` bundle**: bundler script (`rust/scripts/bundle-macos.sh`) produces a double-clickable `malScraper.app` with the rynmon.ie brand icon, runnable from Finder, Launchpad, and Spotlight. The launcher shim opens a fresh Terminal window and execs the binary so the TUI gets a real terminal session.
+- **macOS ARM (Apple Silicon) builds**: explicit `aarch64-apple-darwin` target now built on every push/PR via the rust CI workflow, with binary architecture verified via `file`.
+- **Local build script** `rust/build.sh` for macOS/Linux with `--arm`, `--x86_64`, `--universal`, `--app`, `--app-arm`, `--app-x86_64`, `--app-universal`, `--linux`, `--linux-arm` flags. Auto-installs missing rustup targets.
+- **Universal binary** support via `lipo` for macOS distributions targeting both Apple Silicon and Intel.
+- **Icon source upgrade**: replaced the legacy 75x75 Windows `.ico` with the rynmon.ie brand asterisk (`icon.png`, 512x512 RGBA, transparent rounded corners). Vector source `icon.svg` kept for regeneration.
+
+### Changed
+- **Release workflow** modernized: replaced deprecated `actions-rs/toolchain@v1` with `dtolnay/rust-toolchain@stable`, added `Swatinem/rust-cache@v2` per-target caching, bumped `softprops/action-gh-release` to v2, added explicit `permissions: contents: write`. macOS targets now also publish `<artifact>.app.tar.gz` alongside the raw binary tarball.
+- **CI workflow** modernized with the same toolchain action and cache.
+
 ## [2.0.7] - 2025-01-XX
 
 ### Changed

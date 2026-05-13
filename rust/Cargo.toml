@@ -1,6 +1,6 @@
 [package]
 name = "malscraper"
-version = "2.0.7"
+version = "2.1.0"
 edition = "2021"
 authors = ["Ryan Monaghan"]
 description = "Cross-platform tool to scrape malware domains, IOCs, and C2 IPs from various feeds"

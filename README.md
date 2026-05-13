@@ -44,6 +44,29 @@ cargo build --release
 
 The binary will be at `rust/target/release/malscraper` (or `.exe` on Windows).
 
+**macOS — build for Apple Silicon (ARM), Intel, or universal:**
+
+A helper script is provided for explicit target selection:
+
+```bash
+cd rust
+./build.sh                 # native build (ARM on Apple Silicon, Intel on x86_64 Macs)
+./build.sh --arm           # force aarch64-apple-darwin (Apple Silicon)
+./build.sh --x86_64        # force x86_64-apple-darwin (Intel)
+./build.sh --universal     # universal binary (ARM + Intel via lipo)
+```
+
+The script auto-installs the requested rustup target if missing. Output binaries land in
+`rust/target/<triple>/release/malscraper`, and the universal binary at
+`rust/target/universal-apple-darwin/release/malscraper`.
+
+You can also invoke cargo directly:
+
+```bash
+rustup target add aarch64-apple-darwin
+cargo build --release --target aarch64-apple-darwin
+```
+
 ## Features
 
 ### Core Features

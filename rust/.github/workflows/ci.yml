@@ -8,9 +8,10 @@ on:
 
 jobs:
   test:
-    name: Test
+    name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
@@ -18,28 +19,61 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
 
       - name: Run tests
-        run: |
-          cd rust
-          cargo test --verbose
+        working-directory: rust
+        run: cargo test --verbose
 
       - name: Check formatting
-        run: |
-          cd rust
-          cargo fmt -- --check
+        working-directory: rust
+        run: cargo fmt -- --check
 
       - name: Lint
-        run: |
-          cd rust
-          cargo clippy -- -D warnings
+        working-directory: rust
+        run: cargo clippy -- -D warnings
 
       - name: Build
-        run: |
-          cd rust
-          cargo build --release --verbose
+        working-directory: rust
+        run: cargo build --release --verbose
 
+  build-macos-arm:
+    name: Build macOS ARM (aarch64-apple-darwin)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust (aarch64-apple-darwin)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+          key: aarch64-apple-darwin
+
+      - name: Build aarch64-apple-darwin
+        working-directory: rust
+        run: cargo build --release --target aarch64-apple-darwin --verbose
+
+      - name: Verify binary architecture
+        working-directory: rust
+        run: |
+          file target/aarch64-apple-darwin/release/malscraper
+          file target/aarch64-apple-darwin/release/malscraper | grep -q "arm64"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: malscraper-aarch64-apple-darwin
+          path: rust/target/aarch64-apple-darwin/release/malscraper
+          if-no-files-found: error
